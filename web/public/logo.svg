@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <!-- Globe circles -->
+  <circle cx="90" cy="105" r="62" stroke="#1a3a8f" stroke-width="3" fill="none" opacity="0.9"/>
+  
+  <!-- Horizontal ellipse (equator) -->
+  <ellipse cx="90" cy="105" rx="62" ry="22" stroke="#1a3a8f" stroke-width="2" fill="none" opacity="0.7"/>
+  
+  <!-- Vertical lines on globe -->
+  <ellipse cx="90" cy="105" rx="30" ry="62" stroke="#1a3a8f" stroke-width="1.5" fill="none" opacity="0.6"/>
+  <ellipse cx="90" cy="105" rx="55" ry="62" stroke="#1a3a8f" stroke-width="1.5" fill="none" opacity="0.4"/>
+  
+  <!-- Horizontal lines on globe -->
+  <line x1="28" y1="80" x2="152" y2="80" stroke="#1a3a8f" stroke-width="1.5" opacity="0.5"/>
+  <line x1="28" y1="130" x2="152" y2="130" stroke="#1a3a8f" stroke-width="1.5" opacity="0.5"/>
+  
+  <!-- Network nodes on globe -->
+  <circle cx="90" cy="43" r="5" fill="#4f8ef7"/>
+  <circle cx="90" cy="167" r="5" fill="#4f8ef7"/>
+  <circle cx="28" cy="105" r="5" fill="#4f8ef7"/>
+  <circle cx="152" cy="105" r="5" fill="#4f8ef7"/>
+  <circle cx="55" cy="60" r="4" fill="#4f8ef7"/>
+  <circle cx="125" cy="60" r="4" fill="#4f8ef7"/>
+  <circle cx="55" cy="150" r="4" fill="#4f8ef7"/>
+  <circle cx="125" cy="150" r="4" fill="#4f8ef7"/>
+  <circle cx="40" cy="90" r="3.5" fill="#4f8ef7"/>
+  <circle cx="140" cy="90" r="3.5" fill="#4f8ef7"/>
+  <circle cx="40" cy="120" r="3.5" fill="#4f8ef7"/>
+  <circle cx="140" cy="120" r="3.5" fill="#4f8ef7"/>
+  <circle cx="90" cy="105" r="5" fill="#1a3a8f"/>
+  
+  <!-- Network connection lines -->
+  <line x1="90" y1="43" x2="55" y2="60" stroke="#4f8ef7" stroke-width="1" opacity="0.6"/>
+  <line x1="90" y1="43" x2="125" y2="60" stroke="#4f8ef7" stroke-width="1" opacity="0.6"/>
+  <line x1="55" y1="60" x2="28" y2="105" stroke="#4f8ef7" stroke-width="1" opacity="0.6"/>
+  <line x1="125" y1="60" x2="152" y2="105" stroke="#4f8ef7" stroke-width="1" opacity="0.6"/>
+  <line x1="28" y1="105" x2="55" y2="150" stroke="#4f8ef7" stroke-width="1" opacity="0.6"/>
+  <line x1="152" y1="105" x2="125" y2="150" stroke="#4f8ef7" stroke-width="1" opacity="0.6"/>
+  <line x1="55" y1="150" x2="90" y2="167" stroke="#4f8ef7" stroke-width="1" opacity="0.6"/>
+  <line x1="125" y1="150" x2="90" y2="167" stroke="#4f8ef7" stroke-width="1" opacity="0.6"/>
+  <line x1="55" y1="60" x2="90" y2="105" stroke="#4f8ef7" stroke-width="1" opacity="0.5"/>
+  <line x1="125" y1="60" x2="90" y2="105" stroke="#4f8ef7" stroke-width="1" opacity="0.5"/>
+  <line x1="28" y1="105" x2="90" y2="105" stroke="#4f8ef7" stroke-width="1" opacity="0.5"/>
+  <line x1="152" y1="105" x2="90" y2="105" stroke="#4f8ef7" stroke-width="1" opacity="0.5"/>
+  
+  <!-- Indian flag color orbit arc (saffron top) -->
+  <path d="M 38 68 Q 90 30 142 68" stroke="#FF9933" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.9"/>
+  <!-- Green bottom arc -->
+  <path d="M 38 142 Q 90 180 142 142" stroke="#138808" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.9"/>
+  
+  <!-- Arrow (circuit style) -->
+  <line x1="75" y1="145" x2="158" y2="45" stroke="#4f8ef7" stroke-width="5" stroke-linecap="round"/>
+  <!-- Arrow circuit dots -->
+  <circle cx="95" cy="122" r="3" fill="#7cb9f7"/>
+  <circle cx="115" cy="99" r="3" fill="#7cb9f7"/>
+  <circle cx="135" cy="76" r="3" fill="#7cb9f7"/>
+  <!-- Arrow head -->
+  <polygon points="158,45 140,48 155,62" fill="#4f8ef7"/>
+  <!-- Arrow head highlight -->
+  <polygon points="158,45 148,47 157,56" fill="#7cb9f7" opacity="0.6"/>
+</svg>

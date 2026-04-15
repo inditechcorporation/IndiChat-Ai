@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: indichat-server
+    env: node
+    rootDir: server
+    buildCommand: cd ../web && npm install && npm run build && cd ../server && npm install
+    startCommand: node index.js
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: WS_PORT
+        value: 8765
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DB_PATH
+        value: ./data/db.sqlite
+      - key: TTS_PROVIDER
+        value: groq
+      - key: TIMEZONE_OFFSET
+        value: 330
+      - key: ADMIN_EMAIL
+        value: aarifali4012@gmail.com
+      - key: GROQ_API_KEY
+        sync: false   # set manually in Render dashboard
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SITE_URL
+        sync: false   # set to your Vercel URL after deploy
