@@ -148,7 +148,7 @@ async function ttsElevenLabs(text, language, gender) {
   return Buffer.from(await response.arrayBuffer());
 }
 
-// ── MP3/WAV → OPUS frames (for ESP32) ───────────────────────────────
+// ── MP3/WAV/PCM → OPUS frames (for ESP32) ───────────────────────────
 // ESP32 expects: 16kHz mono OPUS frames, 60ms each
 async function audioToOpusFrames(audioBuffer, inputFormat = 'mp3') {
   const tmpIn  = path.join(os.tmpdir(), `tts_in_${Date.now()}.${inputFormat}`);
@@ -156,17 +156,20 @@ async function audioToOpusFrames(audioBuffer, inputFormat = 'mp3') {
 
   fs.writeFileSync(tmpIn, audioBuffer);
 
+  // For Gemini PCM/WAV output — 24kHz, 16-bit, mono
+  const inputArgs = inputFormat === 'wav'
+    ? ['-y', '-f', 's16le', '-ar', '24000', '-ac', '1', '-i', tmpIn]
+    : ['-y', '-i', tmpIn];
+
   try {
-    // Convert to raw OPUS using ffmpeg
     await new Promise((resolve, reject) => {
       const ff = spawn('ffmpeg', [
-        '-y',
-        '-i', tmpIn,
-        '-ar', '16000',    // 16kHz sample rate
-        '-ac', '1',        // mono
+        ...inputArgs,
+        '-ar', '16000',
+        '-ac', '1',
         '-c:a', 'libopus',
-        '-b:a', '32k',     // 32kbps bitrate (good for voice)
-        '-frame_duration', '60',  // 60ms frames (matches ESP32)
+        '-b:a', '32k',
+        '-frame_duration', '60',
         '-vbr', 'off',
         '-f', 'opus',
         tmpOut
@@ -176,9 +179,6 @@ async function audioToOpusFrames(audioBuffer, inputFormat = 'mp3') {
     });
 
     const opusData = fs.readFileSync(tmpOut);
-    // Split into 60ms frames
-    // Each OPUS frame at 16kHz, 60ms = 960 samples
-    // Frame size varies, so we split by OGG page boundaries
     return splitOpusFrames(opusData);
   } finally {
     try { fs.unlinkSync(tmpIn); } catch {}
@@ -196,6 +196,47 @@ function splitOpusFrames(opusBuffer) {
     frames.push(opusBuffer.slice(i, i + CHUNK_SIZE));
   }
   return frames;
+}
+
+// ── Gemini TTS (Primary) ─────────────────────────────────────────────
+// Uses gemini-3.1-flash-tts-preview with auto-fallback to Groq
+async function ttsGemini(text, language, gender) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error('GEMINI_API_KEY not set');
+
+  // Pick voice based on gender — warm/soft for female, firm/informative for male
+  const voice = gender === 'male' ? 'Charon' : 'Kore';
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-tts-preview:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text }] }],
+        generationConfig: {
+          responseModalities: ['AUDIO'],
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName: voice }
+            }
+          }
+        }
+      })
+    }
+  );
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Gemini TTS error: ${response.status} ${err}`);
+  }
+
+  const data = await response.json();
+  const audioData = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+  if (!audioData) throw new Error('Gemini TTS: no audio data in response');
+
+  // Gemini returns PCM audio at 24kHz — convert to buffer
+  return Buffer.from(audioData, 'base64');
 }
 
 // ── Groq TTS - Orpheus voices ────────────────────────────────────────
@@ -232,38 +273,51 @@ async function ttsGroq(text, language, gender) {
 
 // ── Main synthesize function ─────────────────────────────────────────
 async function synthesize(text, language, gender) {
-  const provider = process.env.TTS_PROVIDER || 'groq';
+  const provider = process.env.TTS_PROVIDER || 'gemini';
   console.log(`[TTS] Synthesizing with ${provider}: "${text.substring(0, 50)}..."`);
   const t0 = Date.now();
 
   let audioBuffer;
   let fmt = 'mp3';
 
-  try {
-    switch (provider) {
-      case 'groq':
-        audioBuffer = await ttsGroq(text, language, gender);
-        break;
-      case 'google':
-        audioBuffer = await ttsGoogle(text, language, gender);
-        break;
-      case 'openai':
-        audioBuffer = await ttsOpenAI(text, language, gender);
-        break;
-      case 'elevenlabs':
-        audioBuffer = await ttsElevenLabs(text, language, gender);
-        break;
-      case 'edge':
-      default:
-        audioBuffer = await ttsEdge(text, language, gender);
-        break;
-    }
-  } catch (e) {
-    console.warn(`[TTS] ${provider} failed: ${e.message}, trying edge-tts fallback`);
+  // Try Gemini TTS first (primary)
+  if (process.env.GEMINI_API_KEY) {
     try {
-      audioBuffer = await ttsEdge(text, language, gender);
-    } catch (e2) {
-      console.error('[TTS] All providers failed:', e2.message);
+      audioBuffer = await ttsGemini(text, language, gender);
+      fmt = 'wav'; // Gemini returns PCM/WAV
+      console.log(`[TTS] Gemini TTS success in ${Date.now() - t0}ms`);
+    } catch (e) {
+      console.warn(`[TTS] Gemini TTS failed: ${e.message} — falling back to Groq`);
+      audioBuffer = null;
+    }
+  }
+
+  // Fallback to Groq if Gemini failed or no key
+  if (!audioBuffer) {
+    try {
+      audioBuffer = await ttsGroq(text, language, gender);
+      fmt = 'mp3';
+      console.log(`[TTS] Groq TTS success in ${Date.now() - t0}ms`);
+    } catch (e) {
+      console.warn(`[TTS] Groq TTS failed: ${e.message} — trying other providers`);
+    }
+  }
+
+  // Further fallbacks
+  if (!audioBuffer) {
+    try {
+      switch (provider) {
+        case 'google':
+          audioBuffer = await ttsGoogle(text, language, gender); break;
+        case 'openai':
+          audioBuffer = await ttsOpenAI(text, language, gender); break;
+        case 'elevenlabs':
+          audioBuffer = await ttsElevenLabs(text, language, gender); break;
+        default:
+          audioBuffer = await ttsEdge(text, language, gender); break;
+      }
+    } catch (e) {
+      console.error('[TTS] All providers failed:', e.message);
       return [];
     }
   }

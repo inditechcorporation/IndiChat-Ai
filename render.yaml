@@ -36,3 +36,5 @@ services:
         sync: false
       - key: UPSTASH_REDIS_REST_TOKEN
         sync: false
+      - key: GEMINI_API_KEY
+        sync: false   # Google AI Studio key for Gemini TTS + Image Gen
