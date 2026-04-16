@@ -285,7 +285,22 @@ export default function Chat({ user }) {
         if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
         reply = data.choices?.[0]?.message?.content || '';
       } else if (model.provider === 'gemini' || model.provider === 'gemini_free') {
-        reply = await callGemini(history, key);
+        // gemini_free uses server-side key rotation (admin keys)
+        // gemini uses user's own key via callGemini
+        if (model.provider === 'gemini_free') {
+          const token = localStorage.getItem('token');
+          const msgs = buildMessages(history, sentImage);
+          const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ model: model.id, messages: msgs }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
+          reply = data.choices?.[0]?.message?.content || '';
+        } else {
+          reply = await callGemini(history, key);
+        }
       } else {
         const token = localStorage.getItem('token');
         const msgs = buildMessages(history, sentImage);

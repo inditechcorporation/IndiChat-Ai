@@ -157,7 +157,8 @@ router.get('/settings', authMiddleware, adminOnly, async (req, res) => {
 router.post('/settings', authMiddleware, adminOnly, async (req, res) => {
   const allowed = [
     'ai_name', 'ai_intro', 'creator_name', 'creator_intro',
-    'tts_provider', 'tts_voice_female', 'tts_voice_male', 'tts_gemini_key'
+    'tts_provider', 'tts_voice_female', 'tts_voice_male', 'tts_gemini_key',
+    'gemini_api_keys'
   ];
   for (const key of allowed) {
     if (req.body[key] !== undefined) {
@@ -167,6 +168,11 @@ router.post('/settings', authMiddleware, adminOnly, async (req, res) => {
         syncSettingsToSupabase(key, req.body[key]);
       }
     }
+  }
+  // Reload Gemini keys if updated
+  if (req.body.gemini_api_keys !== undefined) {
+    const { reloadGeminiKeys } = require('../geminiKeyRotator');
+    reloadGeminiKeys(req.body.gemini_api_keys);
   }
   res.json({ success: true });
 });

@@ -114,7 +114,8 @@ export default function Admin({ user, onLogout }) {
   const [users, setUsers]       = useState([]);
   const [settings, setSettings] = useState({
     ai_name: '', ai_intro: '', creator_name: '', creator_intro: '',
-    tts_provider: 'gemini', tts_voice_female: 'Kore', tts_voice_male: 'Charon', tts_gemini_key: ''
+    tts_provider: 'gemini', tts_voice_female: 'Kore', tts_voice_male: 'Charon', tts_gemini_key: '',
+    gemini_api_keys: ''
   });
   const [newKeys, setNewKeys]   = useState('');
   const [msg, setMsg]           = useState({ text: '', ok: true });
@@ -173,6 +174,7 @@ export default function Admin({ user, onLogout }) {
   const TABS = [
     { id: 'overview', label: 'Overview',    icon: <BarChart3 size={14} /> },
     { id: 'keys',     label: 'Groq Keys',   icon: <Key size={14} /> },
+    { id: 'gemini',   label: 'Gemini Keys', icon: <Key size={14} /> },
     { id: 'identity', label: 'AI Identity', icon: <Bot size={14} /> },
     { id: 'tts',      label: 'TTS Voice',   icon: <Users size={14} /> },
     { id: 'users',    label: 'Users',       icon: <Users size={14} /> },
@@ -286,6 +288,31 @@ export default function Admin({ user, onLogout }) {
             <button style={{ ...primaryBtn, opacity: newKeys.trim() && !saving ? 1 : 0.5 }}
               onClick={saveKeys} disabled={!newKeys.trim() || saving}>
               {saving ? 'Saving...' : 'Save Keys'}
+            </button>
+          </div>
+        )}
+
+        {/* ── Gemini Keys Tab ── */}
+        {tab === 'gemini' && (
+          <div style={{ background: t.bg2, border: `1px solid ${t.border}`, borderRadius: '12px', padding: '24px' }}>
+            <div style={{ fontWeight: '700', fontSize: '15px', marginBottom: '6px' }}>Gemini API Keys</div>
+            <div style={{ fontSize: '13px', color: t.text2, marginBottom: '20px' }}>
+              Add up to 4 Gemini API keys — system auto-rotates when one hits rate limit.
+              Get free keys at <a href="https://aistudio.google.com" target="_blank" rel="noreferrer" style={{ color: t.accent }}>aistudio.google.com</a>
+            </div>
+
+            <div style={{ fontSize: '11px', color: t.text2, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.5px', fontWeight: '600' }}>Keys (one per line, starts with AIza)</div>
+            <textarea
+              style={{ width: '100%', padding: '12px', background: t.bg3, border: `1px solid ${t.border}`, borderRadius: '8px', color: t.text, fontSize: '13px', fontFamily: 'monospace', outline: 'none', resize: 'vertical', minHeight: '120px', boxSizing: 'border-box', marginBottom: '12px' }}
+              placeholder={'AIzaSy...\nAIzaSy...\nAIzaSy...\nAIzaSy...'}
+              value={settings.gemini_api_keys}
+              onChange={e => setSettings(s => ({ ...s, gemini_api_keys: e.target.value }))}
+            />
+            <div style={{ fontSize: '11px', color: t.text3, marginBottom: '14px' }}>
+              These keys are used for "Gemini 2.5 Flash (Free)" model in chat. Keys are stored securely on server — never exposed to users.
+            </div>
+            <button style={{ ...primaryBtn, opacity: !saving ? 1 : 0.5 }} onClick={saveSettings} disabled={saving}>
+              {saving ? 'Saving...' : 'Save Gemini Keys'}
             </button>
           </div>
         )}

@@ -198,49 +198,6 @@ function splitOpusFrames(opusBuffer) {
   return frames;
 }
 
-// ── Gemini TTS (Primary) ─────────────────────────────────────────────
-// Uses gemini-3.1-flash-tts-preview with auto-fallback to Groq
-async function ttsGemini(text, language, gender, settings = {}) {
-  const apiKey = settings.tts_gemini_key || process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error('GEMINI_API_KEY not set');
-
-  // Use admin-configured voice or default
-  const voice = gender === 'male'
-    ? (settings.tts_voice_male || 'Charon')
-    : (settings.tts_voice_female || 'Kore');
-
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-tts-preview:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text }] }],
-        generationConfig: {
-          responseModalities: ['AUDIO'],
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: voice }
-            }
-          }
-        }
-      })
-    }
-  );
-
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`Gemini TTS error: ${response.status} ${err}`);
-  }
-
-  const data = await response.json();
-  const audioData = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-  if (!audioData) throw new Error('Gemini TTS: no audio data in response');
-
-  // Gemini returns PCM audio at 24kHz — convert to buffer
-  return Buffer.from(audioData, 'base64');
-}
-
 // ── Groq TTS - Orpheus voices ────────────────────────────────────────
 async function ttsGroq(text, language, gender) {
   const apiKey = getKey();
@@ -291,28 +248,13 @@ async function synthesize(text, language, gender) {
   let audioBuffer;
   let fmt = 'mp3';
 
-  // Try Gemini TTS first (primary)
-  const geminiKey = settings.tts_gemini_key || process.env.GEMINI_API_KEY;
-  if (geminiKey) {
-    try {
-      audioBuffer = await ttsGemini(text, language, gender, settings);
-      fmt = 'wav';
-      console.log(`[TTS] Gemini TTS success in ${Date.now() - t0}ms`);
-    } catch (e) {
-      console.warn(`[TTS] Gemini TTS failed: ${e.message} — falling back to Groq`);
-      audioBuffer = null;
-    }
-  }
-
-  // Fallback to Groq if Gemini failed or no key
-  if (!audioBuffer) {
-    try {
-      audioBuffer = await ttsGroq(text, language, gender);
-      fmt = 'mp3';
-      console.log(`[TTS] Groq TTS success in ${Date.now() - t0}ms`);
-    } catch (e) {
-      console.warn(`[TTS] Groq TTS failed: ${e.message} — trying other providers`);
-    }
+  // Groq TTS (primary)
+  try {
+    audioBuffer = await ttsGroq(text, language, gender);
+    fmt = 'mp3';
+    console.log(`[TTS] Groq TTS success in ${Date.now() - t0}ms`);
+  } catch (e) {
+    console.warn(`[TTS] Groq TTS failed: ${e.message} — trying fallback`);
   }
 
   // Further fallbacks

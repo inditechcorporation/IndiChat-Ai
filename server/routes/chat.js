@@ -1,9 +1,13 @@
 const express = require('express');
 const authMiddleware = require('../middleware/auth');
 const { getKey, markExhausted } = require('../keyRotator');
+const { getGeminiKey, markGeminiExhausted, loadGeminiKeys } = require('../geminiKeyRotator');
 const { all } = require('../db');
 const { webSearch, needsWebSearch, buildSearchContext, classifyQuery } = require('../webSearch');
 const router = express.Router();
+
+// Load Gemini keys on startup
+loadGeminiKeys();
 
 const GROQ_FREE_MODELS = [
   'llama-3.1-8b-instant',
@@ -126,6 +130,47 @@ router.post('/', authMiddleware, async (req, res) => {
     url = 'https://api.deepseek.com/chat/completions';
   } else if (model.startsWith('gpt')) {
     url = 'https://api.openai.com/v1/chat/completions';
+  } else if (model.startsWith('gemini')) {
+    // Gemini — use admin key rotation (server-side, never exposed to client)
+    const geminiKey = getGeminiKey() || api_key;
+    if (!geminiKey) return res.status(400).json({ error: 'No Gemini API key available. Add keys in Admin Panel.' });
+
+    // Convert messages to Gemini format
+    const geminiContents = finalMessages
+      .filter(m => m.role === 'user' || m.role === 'assistant')
+      .map(m => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: Array.isArray(m.content)
+          ? m.content.map(p => p.type === 'text' ? { text: p.text } : { inlineData: { mimeType: p.image_url?.url?.split(';')[0]?.split(':')[1] || 'image/jpeg', data: p.image_url?.url?.split(',')[1] || '' } })
+          : [{ text: m.content || '' }]
+      }));
+
+    try {
+      const geminiRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: geminiContents,
+            generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
+          })
+        }
+      );
+
+      if (!geminiRes.ok) {
+        const err = await geminiRes.json();
+        if (geminiRes.status === 429) markGeminiExhausted(geminiKey);
+        return res.status(geminiRes.status).json({ error: err.error?.message || 'Gemini error' });
+      }
+
+      const gData = await geminiRes.json();
+      const text = gData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      return res.json({ choices: [{ message: { role: 'assistant', content: text } }] });
+    } catch (e) {
+      console.error('[Chat] Gemini error:', e.message);
+      return res.status(500).json({ error: e.message });
+    }
   } else {
     url = 'https://api.groq.com/openai/v1/chat/completions';
   }
