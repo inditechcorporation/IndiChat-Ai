@@ -1,4 +1,6 @@
-"node_modules/" 
-"web/dist/" 
-"server/data/db.sqlite" 
-".env" 
+node_modules/
+web/dist/
+server/data/db.sqlite
+.env
+server/.env
+**/.env
