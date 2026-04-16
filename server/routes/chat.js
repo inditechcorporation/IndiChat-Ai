@@ -135,8 +135,8 @@ router.post('/', authMiddleware, async (req, res) => {
     const geminiKey = getGeminiKey() || api_key;
     if (!geminiKey) return res.status(400).json({ error: 'No Gemini API key available. Add keys in Admin Panel.' });
 
-    // Convert messages to Gemini format
-    const geminiContents = finalMessages
+    // Map free model ID to actual Gemini model ID
+    const actualModel = model === 'gemini-2.5-flash-free' ? 'gemini-2.5-flash' : model;
       .filter(m => m.role === 'user' || m.role === 'assistant')
       .map(m => ({
         role: m.role === 'assistant' ? 'model' : 'user',
@@ -147,7 +147,7 @@ router.post('/', authMiddleware, async (req, res) => {
 
     try {
       const geminiRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${actualModel}:generateContent?key=${geminiKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

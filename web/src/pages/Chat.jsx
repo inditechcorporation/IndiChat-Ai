@@ -26,7 +26,7 @@ const MODELS = [
   { id: 'openai/gpt-oss-120b',                       label: 'GPT OSS 120B',     provider: 'groq',     color: '#f97316', free: true,  vision: false, tags: ['reasoning','function','multilingual']},
   { id: 'openai/gpt-oss-20b',                        label: 'GPT OSS 20B',      provider: 'groq',     color: '#f97316', free: true,  vision: false, tags: ['reasoning','function','safety']    },
   { id: 'qwen/qwen3-32b',                            label: 'Qwen3 32B',        provider: 'groq',     color: '#f97316', free: true,  vision: false, tags: ['reasoning','function','text']      },
-  { id: 'gemini-2.5-flash',                          label: 'Gemini 2.5 Flash', provider: 'gemini_free', color: '#4285f4', free: true, vision: true, tags: ['vision','thinking','text'], thinking: true },
+  { id: 'gemini-2.5-flash-free',                     label: 'Gemini 2.5 Flash', provider: 'gemini_free', color: '#4285f4', free: true, vision: true, tags: ['vision','thinking','text'], thinking: true },
   { id: 'gemini-2.5-flash',                          label: 'Gemini 2.5 Flash', provider: 'gemini',   color: '#4285f4', free: false, vision: true,  tags: ['vision','text']                    },
   { id: 'deepseek-chat',                             label: 'DeepSeek V3',      provider: 'deepseek', color: '#4f8ef7', free: false, vision: false, tags: ['text','reasoning']                 },
   { id: 'gpt-4o-mini',                               label: 'GPT-4o Mini',      provider: 'openai',   color: '#10a37f', free: false, vision: true,  tags: ['vision','text']                    },
@@ -138,11 +138,7 @@ export default function Chat({ user }) {
 
   const saveAndStart = () => {
     if (!model.free && !apiKey.trim()) return;
-    // gemini_free needs user's own key even though it's "free tier"
-    if (model.provider === 'gemini_free' && !apiKey.trim()) return;
-    if (!model.free || model.provider === 'gemini_free') {
-      localStorage.setItem('indi_key_' + model.provider, apiKey);
-    }
+    if (!model.free) localStorage.setItem(`indi_key_${model.provider}`, apiKey);
     setStep('chat');
     const id = Date.now().toString();
     const welcome = { id: 'w_' + id, role: 'assistant', content: `Welcome back, ${userName}! How can I help you today?`, ts: Date.now() };
@@ -255,9 +251,7 @@ export default function Chat({ user }) {
 
   const send = async (text) => {
     if (!text?.trim() && !image || loading) return;
-    const key = (model.free && model.provider !== 'gemini_free')
-      ? ''
-      : (localStorage.getItem(`indi_key_${model.provider}`) || apiKey);
+    const key = model.free ? '' : (localStorage.getItem(`indi_key_${model.provider}`) || apiKey);
     const msgText = text?.trim() || (image ? 'What is in this image?' : '');
     const cid = activeId;
 
@@ -392,8 +386,7 @@ export default function Chat({ user }) {
 
   // ── Model Select Screen ───────────────────────────────────────────
   if (step === 'select') {
-    // gemini_free needs key even though free:true
-    const needsKey = model && (!model.free || model.provider === 'gemini_free');
+    const needsKey = model && !model.free;
     const hint = needsKey ? KEY_HINTS[model.provider] : null;
     return (
       <div style={{ ...pg, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
@@ -504,7 +497,7 @@ export default function Chat({ user }) {
             </div>
           )}
 
-          {model && model.free && model.provider !== 'gemini_free' && (
+          {model && model.free && (
             <button className="btn-3d"
               style={{ width: '100%', padding: '14px', background: 'linear-gradient(135deg,#4f8ef7,#7c6af7)', color: '#fff', border: 'none', borderRadius: '12px', cursor: 'pointer', fontSize: '15px', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 8px 32px rgba(79,142,247,0.4)', animation: 'slideUp 0.3s ease' }}
               onClick={saveAndStart}>
