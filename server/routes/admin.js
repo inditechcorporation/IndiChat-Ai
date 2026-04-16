@@ -155,15 +155,21 @@ router.get('/settings', authMiddleware, adminOnly, async (req, res) => {
 
 // ── POST /api/admin/settings ──────────────────────────────────────────
 router.post('/settings', authMiddleware, adminOnly, async (req, res) => {
-  const allowed = ['ai_name', 'ai_intro', 'creator_name', 'creator_intro'];
+  const allowed = [
+    'ai_name', 'ai_intro', 'creator_name', 'creator_intro',
+    'tts_provider', 'tts_voice_female', 'tts_voice_male', 'tts_gemini_key'
+  ];
   for (const key of allowed) {
     if (req.body[key] !== undefined) {
       await run('INSERT OR REPLACE INTO platform_settings (key, value) VALUES (?, ?)',
         [key, req.body[key]]);
-      syncSettingsToSupabase(key, req.body[key]);
+      if (['ai_name','ai_intro','creator_name','creator_intro'].includes(key)) {
+        syncSettingsToSupabase(key, req.body[key]);
+      }
     }
   }
   res.json({ success: true });
+});  res.json({ success: true });
 });
 
 // ── GET /api/admin/platform-identity (public - for chat to use) ───────

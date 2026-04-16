@@ -200,12 +200,14 @@ function splitOpusFrames(opusBuffer) {
 
 // ── Gemini TTS (Primary) ─────────────────────────────────────────────
 // Uses gemini-3.1-flash-tts-preview with auto-fallback to Groq
-async function ttsGemini(text, language, gender) {
-  const apiKey = process.env.GEMINI_API_KEY;
+async function ttsGemini(text, language, gender, settings = {}) {
+  const apiKey = settings.tts_gemini_key || process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('GEMINI_API_KEY not set');
 
-  // Pick voice based on gender — warm/soft for female, firm/informative for male
-  const voice = gender === 'male' ? 'Charon' : 'Kore';
+  // Use admin-configured voice or default
+  const voice = gender === 'male'
+    ? (settings.tts_voice_male || 'Charon')
+    : (settings.tts_voice_female || 'Kore');
 
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-tts-preview:generateContent?key=${apiKey}`,
@@ -273,18 +275,28 @@ async function ttsGroq(text, language, gender) {
 
 // ── Main synthesize function ─────────────────────────────────────────
 async function synthesize(text, language, gender) {
-  const provider = process.env.TTS_PROVIDER || 'gemini';
-  console.log(`[TTS] Synthesizing with ${provider}: "${text.substring(0, 50)}..."`);
+  // Load TTS settings from DB
+  let settings = {};
+  try {
+    const { all } = require('./db');
+    const rows = await all('SELECT key, value FROM platform_settings WHERE key IN (?,?,?,?)',
+      ['tts_provider', 'tts_voice_female', 'tts_voice_male', 'tts_gemini_key']);
+    rows.forEach(r => { settings[r.key] = r.value; });
+  } catch {}
+
+  const provider = settings.tts_provider || process.env.TTS_PROVIDER || 'gemini';
+  console.log(`[TTS] Provider: ${provider} | Voice: ${gender === 'male' ? settings.tts_voice_male || 'Charon' : settings.tts_voice_female || 'Kore'}`);
   const t0 = Date.now();
 
   let audioBuffer;
   let fmt = 'mp3';
 
   // Try Gemini TTS first (primary)
-  if (process.env.GEMINI_API_KEY) {
+  const geminiKey = settings.tts_gemini_key || process.env.GEMINI_API_KEY;
+  if (geminiKey) {
     try {
-      audioBuffer = await ttsGemini(text, language, gender);
-      fmt = 'wav'; // Gemini returns PCM/WAV
+      audioBuffer = await ttsGemini(text, language, gender, settings);
+      fmt = 'wav';
       console.log(`[TTS] Gemini TTS success in ${Date.now() - t0}ms`);
     } catch (e) {
       console.warn(`[TTS] Gemini TTS failed: ${e.message} — falling back to Groq`);

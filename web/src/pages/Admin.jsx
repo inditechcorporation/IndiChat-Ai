@@ -112,7 +112,10 @@ export default function Admin({ user, onLogout }) {
   const [tab, setTab]           = useState('overview');
   const [stats, setStats]       = useState(null);
   const [users, setUsers]       = useState([]);
-  const [settings, setSettings] = useState({ ai_name: '', ai_intro: '', creator_name: '', creator_intro: '' });
+  const [settings, setSettings] = useState({
+    ai_name: '', ai_intro: '', creator_name: '', creator_intro: '',
+    tts_provider: 'gemini', tts_voice_female: 'Kore', tts_voice_male: 'Charon', tts_gemini_key: ''
+  });
   const [newKeys, setNewKeys]   = useState('');
   const [msg, setMsg]           = useState({ text: '', ok: true });
   const [saving, setSaving]     = useState(false);
@@ -171,6 +174,7 @@ export default function Admin({ user, onLogout }) {
     { id: 'overview', label: 'Overview',    icon: <BarChart3 size={14} /> },
     { id: 'keys',     label: 'Groq Keys',   icon: <Key size={14} /> },
     { id: 'identity', label: 'AI Identity', icon: <Bot size={14} /> },
+    { id: 'tts',      label: 'TTS Voice',   icon: <Users size={14} /> },
     { id: 'users',    label: 'Users',       icon: <Users size={14} /> },
   ];
 
@@ -318,6 +322,79 @@ export default function Admin({ user, onLogout }) {
 
             <button style={{ ...primaryBtn, opacity: !saving ? 1 : 0.5 }} onClick={saveSettings} disabled={saving}>
               {saving ? 'Saving...' : 'Save Identity'}
+            </button>
+          </div>
+        )}
+
+        {/* ── TTS Voice Tab ── */}
+        {tab === 'tts' && (
+          <div style={{ background: t.bg2, border: `1px solid ${t.border}`, borderRadius: '12px', padding: '24px' }}>
+            <div style={{ fontWeight: '700', fontSize: '15px', marginBottom: '6px' }}>TTS Voice Settings</div>
+            <div style={{ fontSize: '13px', color: t.text2, marginBottom: '20px' }}>
+              Configure Gemini TTS voices. Gemini is primary — Groq Orpheus is automatic fallback.
+            </div>
+
+            <label style={lbl}>Gemini API Key (for TTS)</label>
+            <input style={inp} type="password" placeholder="AIza... (from Google AI Studio)"
+              value={settings.tts_gemini_key}
+              onChange={e => setSettings(s => ({ ...s, tts_gemini_key: e.target.value }))} />
+            <div style={{ fontSize: '11px', color: t.text3, marginBottom: '16px' }}>
+              Get free key at <a href="https://aistudio.google.com" target="_blank" rel="noreferrer" style={{ color: t.accent }}>aistudio.google.com</a>
+            </div>
+
+            <label style={lbl}>Female Voice</label>
+            <select style={{ ...inp, cursor: 'pointer' }}
+              value={settings.tts_voice_female}
+              onChange={e => setSettings(s => ({ ...s, tts_voice_female: e.target.value }))}>
+              {[
+                ['Kore', 'Kore — Firm'],
+                ['Aoede', 'Aoede — Breezy'],
+                ['Leda', 'Leda — Youthful'],
+                ['Callirrhoe', 'Callirrhoe — Easy-going'],
+                ['Autonoe', 'Autonoe — Bright'],
+                ['Enceladus', 'Enceladus — Breathy'],
+                ['Despina', 'Despina — Smooth'],
+                ['Erinome', 'Erinome — Clear'],
+                ['Laomedeia', 'Laomedeia — Upbeat'],
+                ['Achernar', 'Achernar — Soft'],
+                ['Pulcherrima', 'Pulcherrima — Forward'],
+                ['Achird', 'Achird — Friendly'],
+                ['Vindemiatrix', 'Vindemiatrix — Gentle'],
+                ['Sadachbia', 'Sadachbia — Lively'],
+                ['Sulafat', 'Sulafat — Warm'],
+              ].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+            </select>
+
+            <label style={lbl}>Male Voice</label>
+            <select style={{ ...inp, cursor: 'pointer' }}
+              value={settings.tts_voice_male}
+              onChange={e => setSettings(s => ({ ...s, tts_voice_male: e.target.value }))}>
+              {[
+                ['Charon', 'Charon — Informative'],
+                ['Zephyr', 'Zephyr — Bright'],
+                ['Puck', 'Puck — Upbeat'],
+                ['Fenrir', 'Fenrir — Excitable'],
+                ['Orus', 'Orus — Firm'],
+                ['Iapetus', 'Iapetus — Clear'],
+                ['Umbriel', 'Umbriel — Easy-going'],
+                ['Algieba', 'Algieba — Smooth'],
+                ['Algenib', 'Algenib — Gravelly'],
+                ['Rasalgethi', 'Rasalgethi — Informative'],
+                ['Alnilam', 'Alnilam — Firm'],
+                ['Schedar', 'Schedar — Even'],
+                ['Gacrux', 'Gacrux — Mature'],
+                ['Zubenelgenubi', 'Zubenelgenubi — Casual'],
+                ['Sadaltager', 'Sadaltager — Knowledgeable'],
+              ].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+            </select>
+
+            <div style={{ background: t.bg3, border: `1px solid ${t.border}`, borderRadius: '8px', padding: '12px', marginBottom: '16px', fontSize: '12px', color: t.text2 }}>
+              Preview: Female = <strong style={{ color: t.text }}>{settings.tts_voice_female}</strong> | Male = <strong style={{ color: t.text }}>{settings.tts_voice_male}</strong>
+              <br />Fallback: Groq Orpheus (auto when Gemini limit reached)
+            </div>
+
+            <button style={{ ...primaryBtn, opacity: !saving ? 1 : 0.5 }} onClick={saveSettings} disabled={saving}>
+              {saving ? 'Saving...' : 'Save TTS Settings'}
             </button>
           </div>
         )}
