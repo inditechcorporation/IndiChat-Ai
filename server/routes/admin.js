@@ -169,7 +169,6 @@ router.post('/settings', authMiddleware, adminOnly, async (req, res) => {
     }
   }
   res.json({ success: true });
-});  res.json({ success: true });
 });
 
 // ── GET /api/admin/platform-identity (public - for chat to use) ───────

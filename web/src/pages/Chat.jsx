@@ -26,8 +26,8 @@ const MODELS = [
   { id: 'openai/gpt-oss-120b',                       label: 'GPT OSS 120B',     provider: 'groq',     color: '#f97316', free: true,  vision: false, tags: ['reasoning','function','multilingual']},
   { id: 'openai/gpt-oss-20b',                        label: 'GPT OSS 20B',      provider: 'groq',     color: '#f97316', free: true,  vision: false, tags: ['reasoning','function','safety']    },
   { id: 'qwen/qwen3-32b',                            label: 'Qwen3 32B',        provider: 'groq',     color: '#f97316', free: true,  vision: false, tags: ['reasoning','function','text']      },
+  { id: 'gemini-2.5-flash',                          label: 'Gemini 2.5 Flash', provider: 'gemini_free', color: '#4285f4', free: true, vision: true, tags: ['vision','thinking','text'], thinking: true },
   { id: 'gemini-2.5-flash',                          label: 'Gemini 2.5 Flash', provider: 'gemini',   color: '#4285f4', free: false, vision: true,  tags: ['vision','text']                    },
-  { id: 'gemini-3.1-flash-image',                    label: 'Gemini Image Gen',  provider: 'gemini',   color: '#4285f4', free: false, vision: false, tags: ['image'], imageGen: true             },
   { id: 'deepseek-chat',                             label: 'DeepSeek V3',      provider: 'deepseek', color: '#4f8ef7', free: false, vision: false, tags: ['text','reasoning']                 },
   { id: 'gpt-4o-mini',                               label: 'GPT-4o Mini',      provider: 'openai',   color: '#10a37f', free: false, vision: true,  tags: ['vision','text']                    },
   { id: 'gpt-4o',                                    label: 'GPT-4o',           provider: 'openai',   color: '#10a37f', free: false, vision: true,  tags: ['vision','text']                    },
@@ -54,6 +54,7 @@ const API_URLS = {
 };
 
 const KEY_HINTS = {
+  gemini_free: { label: 'Google AI Studio (Free)', url: 'https://aistudio.google.com', hint: 'Free tier — get key from AI Studio' },
   gemini:   { label: 'Google AI Studio', url: 'https://aistudio.google.com', hint: 'Free tier available' },
   deepseek: { label: 'DeepSeek Platform', url: 'https://platform.deepseek.com', hint: 'Very cheap pricing' },
   openai:   { label: 'OpenAI Platform', url: 'https://platform.openai.com', hint: 'Pay per use' },
@@ -137,7 +138,11 @@ export default function Chat({ user }) {
 
   const saveAndStart = () => {
     if (!model.free && !apiKey.trim()) return;
-    if (!model.free) localStorage.setItem(`indi_key_${model.provider}`, apiKey);
+    // gemini_free needs user's own key even though it's "free tier"
+    if (model.provider === 'gemini_free' && !apiKey.trim()) return;
+    if (!model.free || model.provider === 'gemini_free') {
+      localStorage.setItem('indi_key_' + model.provider, apiKey);
+    }
     setStep('chat');
     const id = Date.now().toString();
     const welcome = { id: 'w_' + id, role: 'assistant', content: `Welcome back, ${userName}! How can I help you today?`, ts: Date.now() };
@@ -250,7 +255,9 @@ export default function Chat({ user }) {
 
   const send = async (text) => {
     if (!text?.trim() && !image || loading) return;
-    const key = model.free ? '' : (localStorage.getItem(`indi_key_${model.provider}`) || apiKey);
+    const key = (model.free && model.provider !== 'gemini_free')
+      ? ''
+      : (localStorage.getItem(`indi_key_${model.provider}`) || apiKey);
     const msgText = text?.trim() || (image ? 'What is in this image?' : '');
     const cid = activeId;
 
@@ -277,22 +284,7 @@ export default function Chat({ user }) {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
         reply = data.choices?.[0]?.message?.content || '';
-      } else if (model.provider === 'gemini') {
-        if (model.imageGen) {
-          // Image generation model
-          const { text, imageBase64 } = await callGeminiImageGen(msgText, key);
-          const aiMsg = {
-            id: Date.now() + 1,
-            role: 'assistant',
-            content: text || 'Image generated.',
-            generatedImage: imageBase64 ? `data:image/png;base64,${imageBase64}` : null,
-            ms: Date.now() - t0
-          };
-          const finalMsgs = [...history, aiMsg];
-          setMessages(finalMsgs);
-          updateSession(finalMsgs, cid);
-          return;
-        }
+      } else if (model.provider === 'gemini' || model.provider === 'gemini_free') {
         reply = await callGemini(history, key);
       } else {
         const token = localStorage.getItem('token');
@@ -385,7 +377,9 @@ export default function Chat({ user }) {
 
   // ── Model Select Screen ───────────────────────────────────────────
   if (step === 'select') {
-    const hint = model && !model.free ? KEY_HINTS[model.provider] : null;
+    // gemini_free needs key even though free:true
+    const needsKey = model && (!model.free || model.provider === 'gemini_free');
+    const hint = needsKey ? KEY_HINTS[model.provider] : null;
     return (
       <div style={{ ...pg, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
         {/* BG orbs */}
@@ -429,11 +423,15 @@ export default function Chat({ user }) {
                     </div>
                     <div style={{ display: 'flex', gap: '4px' }}>
                       {m.vision && <div style={{ background: '#4285f422', border: '1px solid #4285f444', borderRadius: '4px', padding: '2px 5px', display: 'flex', alignItems: 'center', gap: '2px' }}><Eye size={9} color="#4285f4" /></div>}
+                      {m.thinking && <div style={{ background: '#a855f722', border: '1px solid #a855f744', borderRadius: '4px', padding: '2px 5px' }}><span style={{ fontSize: '9px', color: '#a855f7', fontWeight: '700' }}>THINK</span></div>}
                       <div style={{ background: '#22c55e22', border: '1px solid #22c55e44', borderRadius: '4px', padding: '2px 5px' }}><span style={{ fontSize: '9px', color: '#22c55e', fontWeight: '700' }}>FREE</span></div>
                     </div>
                   </div>
                   <div style={{ fontWeight: '700', fontSize: '12px', color: model?.id === m.id ? m.color : t.text }}>{m.label}</div>
-                  <div style={{ fontSize: '10px', color: t.text3, marginTop: '2px' }}>Groq</div>
+                  <div style={{ fontSize: '10px', color: t.text3, marginTop: '2px' }}>
+                    {m.provider === 'gemini_free' ? 'Google (Free Key)' : 'Groq'}
+                    {m.thinking && <span style={{ marginLeft: '4px', color: '#a855f7' }}>+ Thinking</span>}
+                  </div>
                 </div>
               ))}
             </div>
@@ -465,7 +463,7 @@ export default function Chat({ user }) {
           </div>
 
           {/* API Key Input */}
-          {model && !model.free && hint && (
+          {model && needsKey && hint && (
             <div className="glass" style={{ borderRadius: '14px', padding: '20px', border: '1px solid rgba(255,255,255,0.08)', animation: 'slideUp 0.3s ease' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600', fontSize: '13px' }}>
@@ -491,7 +489,7 @@ export default function Chat({ user }) {
             </div>
           )}
 
-          {model && model.free && (
+          {model && model.free && model.provider !== 'gemini_free' && (
             <button className="btn-3d"
               style={{ width: '100%', padding: '14px', background: 'linear-gradient(135deg,#4f8ef7,#7c6af7)', color: '#fff', border: 'none', borderRadius: '12px', cursor: 'pointer', fontSize: '15px', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 8px 32px rgba(79,142,247,0.4)', animation: 'slideUp 0.3s ease' }}
               onClick={saveAndStart}>
