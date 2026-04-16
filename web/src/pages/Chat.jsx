@@ -27,6 +27,7 @@ const MODELS = [
   { id: 'openai/gpt-oss-20b',                        label: 'GPT OSS 20B',      provider: 'groq',     color: '#f97316', free: true,  vision: false, tags: ['reasoning','function','safety']    },
   { id: 'qwen/qwen3-32b',                            label: 'Qwen3 32B',        provider: 'groq',     color: '#f97316', free: true,  vision: false, tags: ['reasoning','function','text']      },
   { id: 'gemini-2.5-flash',                          label: 'Gemini 2.5 Flash', provider: 'gemini',   color: '#4285f4', free: false, vision: true,  tags: ['vision','text']                    },
+  { id: 'gemini-3.1-flash-image',                    label: 'Gemini Image Gen',  provider: 'gemini',   color: '#4285f4', free: false, vision: false, tags: ['image'], imageGen: true             },
   { id: 'deepseek-chat',                             label: 'DeepSeek V3',      provider: 'deepseek', color: '#4f8ef7', free: false, vision: false, tags: ['text','reasoning']                 },
   { id: 'gpt-4o-mini',                               label: 'GPT-4o Mini',      provider: 'openai',   color: '#10a37f', free: false, vision: true,  tags: ['vision','text']                    },
   { id: 'gpt-4o',                                    label: 'GPT-4o',           provider: 'openai',   color: '#10a37f', free: false, vision: true,  tags: ['vision','text']                    },
@@ -222,6 +223,31 @@ export default function Chat({ user }) {
     return d.choices?.[0]?.message?.content || '';
   };
 
+  // Gemini Image Generation
+  const callGeminiImageGen = async (prompt, key) => {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${key}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
+        })
+      }
+    );
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || `HTTP ${res.status}`); }
+    const d = await res.json();
+    const parts = d.candidates?.[0]?.content?.parts || [];
+    let text = '';
+    let imageBase64 = null;
+    for (const part of parts) {
+      if (part.text) text = part.text;
+      if (part.inlineData) imageBase64 = part.inlineData.data;
+    }
+    return { text, imageBase64 };
+  };
+
   const send = async (text) => {
     if (!text?.trim() && !image || loading) return;
     const key = model.free ? '' : (localStorage.getItem(`indi_key_${model.provider}`) || apiKey);
@@ -252,6 +278,21 @@ export default function Chat({ user }) {
         if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
         reply = data.choices?.[0]?.message?.content || '';
       } else if (model.provider === 'gemini') {
+        if (model.imageGen) {
+          // Image generation model
+          const { text, imageBase64 } = await callGeminiImageGen(msgText, key);
+          const aiMsg = {
+            id: Date.now() + 1,
+            role: 'assistant',
+            content: text || 'Image generated.',
+            generatedImage: imageBase64 ? `data:image/png;base64,${imageBase64}` : null,
+            ms: Date.now() - t0
+          };
+          const finalMsgs = [...history, aiMsg];
+          setMessages(finalMsgs);
+          updateSession(finalMsgs, cid);
+          return;
+        }
         reply = await callGemini(history, key);
       } else {
         const token = localStorage.getItem('token');
@@ -570,6 +611,17 @@ export default function Chat({ user }) {
                     <div style={{ fontSize: '15px', lineHeight: 1.75, color: msg.error ? t.danger : t.text, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                       {renderMessageContent(msg.content)}
                     </div>
+                    {msg.generatedImage && (
+                      <div style={{ marginTop: '10px' }}>
+                        <img src={msg.generatedImage} alt="Generated" style={{ maxWidth: '100%', maxHeight: '400px', borderRadius: '10px', border: `1px solid ${t.border}` }} />
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                          <a href={msg.generatedImage} download="generated-image.png"
+                            style={{ fontSize: '12px', padding: '4px 10px', background: `${t.accent}22`, border: `1px solid ${t.accent}44`, color: t.accent, borderRadius: '6px', textDecoration: 'none', cursor: 'pointer' }}>
+                            Download
+                          </a>
+                        </div>
+                      </div>
+                    )}
                     {!msg.error && (
                       <button onClick={() => speak(msg.content)} style={{ background: 'transparent', border: 'none', color: t.text3, cursor: 'pointer', fontSize: '11px', padding: '3px 0 0', display: 'flex', alignItems: 'center', gap: '3px', marginTop: '2px' }}>
                         <Volume2 size={11} /> Speak
