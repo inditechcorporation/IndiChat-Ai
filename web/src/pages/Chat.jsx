@@ -424,7 +424,7 @@ export default function Chat({ user }) {
   // ── Chat Screen ───────────────────────────────────────────────────
   if (!model) { setStep('select'); return null; }
   return (
-    <div style={{ display: 'flex', height: '100dvh', background: t.bg, color: t.text, fontFamily: "'Inter',-apple-system,sans-serif", overflow: 'hidden', position: 'fixed', inset: 0 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: t.bg, color: t.text, fontFamily: "'Inter',-apple-system,sans-serif", overflow: 'hidden', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
       {/* Sidebar overlay */}
       {sidebarOpen && (
         <div onClick={() => setSidebarOpen(false)}
@@ -464,9 +464,9 @@ export default function Chat({ user }) {
       </div>
 
       {/* Main area */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', width: '100%' }}>
-        {/* Top bar — back button always visible */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderBottom: `1px solid ${t.border}`, background: t.bg, flexShrink: 0 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+        {/* Top bar — FIXED, never scrolls */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderBottom: `1px solid ${t.border}`, background: t.bg, flexShrink: 0, zIndex: 10 }}>
           <button onClick={() => setSidebarOpen(!sidebarOpen)} style={iconBtn} title="Chats"><Menu size={20} /></button>
           <button onClick={() => navigate('/')} style={{ ...iconBtn, color: t.text2 }} title="Home"><ArrowLeft size={18} /></button>
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
@@ -489,17 +489,30 @@ export default function Chat({ user }) {
         {/* Messages — ONLY this scrolls */}
         <div ref={msgsRef} style={{ flex: 1, overflowY: 'auto', padding: '12px 0', WebkitOverflowScrolling: 'touch' }}>
           {messages.length === 0 && (
-            <div style={{ textAlign: 'center', marginTop: '60px', color: t.text2, padding: '0 16px' }}>
-              <div style={{ width: 52, height: 52, background: `${model.color}22`, border: `1px solid ${model.color}44`, borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-                <ProviderIcon provider={model.provider} size={26} />
+            <div style={{ textAlign: 'center', marginTop: '60px', padding: '0 16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+                <IndiChatLogo size={72} />
               </div>
-              <div style={{ fontSize: '18px', fontWeight: '600', color: t.text, marginBottom: '6px' }}>Hello, {userName}!</div>
-              <div style={{ fontSize: '13px' }}>How can I help you today?</div>
+              <h2 style={{ fontSize: 'clamp(18px,4vw,24px)', fontWeight: '800', margin: '0 0 8px', background: `linear-gradient(135deg,${t.accent},${t.accent2})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                Welcome, {userName}!
+              </h2>
+              <p style={{ color: t.text2, fontSize: '14px', margin: '0 0 4px' }}>How can I help you today?</p>
+              <p style={{ color: t.text3, fontSize: '12px' }}>IndiChat-Ai · {model.label}</p>
             </div>
           )}
           {messages.map(msg => (
             <div key={msg.id} style={{ maxWidth: '760px', margin: '0 auto', padding: '4px 14px' }}>
-              {msg.role === 'user' ? (
+              {msg.id && msg.id.toString().startsWith('w_') ? (
+                <div style={{ textAlign: 'center', padding: '24px 16px 16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '14px' }}>
+                    <IndiChatLogo size={64} />
+                  </div>
+                  <h2 style={{ fontSize: 'clamp(18px,4vw,22px)', fontWeight: '800', margin: '0 0 8px', background: `linear-gradient(135deg,${t.accent},${t.accent2})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                    Welcome, {userName}!
+                  </h2>
+                  <p style={{ color: t.text2, fontSize: '14px', margin: 0 }}>How can I help you today?</p>
+                </div>
+              ) : msg.role === 'user' ? (
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '2px' }}>
                   <div style={{ background: `linear-gradient(135deg,${t.accent},${t.accent2})`, borderRadius: '16px 16px 4px 16px', padding: '10px 16px', maxWidth: '80%', fontSize: '15px', lineHeight: 1.6, color: '#fff' }}>
                     {msg.image && <img src={msg.image} alt="uploaded" style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '8px', display: 'block', marginBottom: msg.content ? '8px' : 0 }} />}
