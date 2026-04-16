@@ -259,7 +259,7 @@ export default function Chat({ user }) {
           <div style={{ textAlign: 'center', marginBottom: '32px', animation: 'slideUp 0.4s ease' }}>
             <button onClick={() => navigate('/')}
               style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '7px 14px', color: t.text2, cursor: 'pointer', fontSize: '13px', marginBottom: '20px' }}>
-              <ArrowLeft size={14} /> Back
+              <ArrowLeft size={14} /> Back to Home
             </button>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
               <div style={{ animation: 'float 6s ease-in-out infinite' }}>
@@ -387,8 +387,8 @@ export default function Chat({ user }) {
           <div style={{ padding: '12px' }}>
             <button onClick={() => setMessages([])} style={{ ...ghostBtn, width: '100%', textAlign: 'left', marginBottom: '4px', display:'flex', alignItems:'center', gap:'8px' }}><RefreshCw size={14} /> New Chat</button>
             <button onClick={() => setStep('select')} style={{ ...ghostBtn, width: '100%', textAlign: 'left', marginBottom: '4px', display:'flex', alignItems:'center', gap:'8px' }}><Cpu size={14} /> Change Model</button>
-            <button onClick={() => navigate('/devices')} style={{ ...ghostBtn, width: '100%', textAlign: 'left', marginBottom: '4px', display:'flex', alignItems:'center', gap:'8px' }}><Cpu size={14} /> My Devices</button>
-            <button onClick={() => navigate('/')} style={{ ...ghostBtn, width: '100%', textAlign: 'left', display:'flex', alignItems:'center', gap:'8px' }}><Home size={14} /> Home</button>
+            <button onClick={() => navigate('/devices')} style={{ ...ghostBtn, width: '100%', textAlign: 'left', marginBottom: '4px', display:'flex', alignItems:'center', gap:'8px' }}><MessageSquare size={14} /> My Devices</button>
+            <button onClick={() => navigate('/')} style={{ ...ghostBtn, width: '100%', textAlign: 'left', display:'flex', alignItems:'center', gap:'8px' }}><ArrowLeft size={14} /> Back to Home</button>
           </div>
           <div style={{ marginTop: 'auto', padding: '12px', borderTop: `1px solid ${t.border}` }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px', background: `${model.color}18`, borderRadius: '8px', border: `1px solid ${model.color}33` }}>

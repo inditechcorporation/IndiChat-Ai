@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { t } from '../theme';
 import api from '../api';
-import { Cpu, Plus, Trash2, Settings, CheckCircle, Clock, Wifi, ChevronRight, X, LogOut, MessageSquare, Home, Shield, Zap } from 'lucide-react';
+import { Cpu, Plus, Trash2, Settings, CheckCircle, Clock, ChevronRight, X, LogOut, MessageSquare, Home, Shield, Zap, ArrowLeft } from 'lucide-react';
 
 const MODELS = [
   { id: 'meta-llama/llama-4-scout-17b-16e-instruct',  label: 'Llama 4 Scout',    provider: 'groq',     color: '#f97316', free: true },
@@ -93,15 +93,23 @@ export default function Devices({ user, onLogout }) {
   };  return (
     <div style={{ minHeight: '100vh', background: t.bg, color: t.text, fontFamily: "'Inter', -apple-system, sans-serif" }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 28px', borderBottom: `1px solid ${t.border}`, background: t.bg2 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 20px', borderBottom: `1px solid ${t.border}`, background: t.bg2 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <button onClick={() => navigate('/')} style={ghostBtn}><Home size={14} style={{marginRight:4}} /> Home</button>
+          <button onClick={() => navigate('/')} style={ghostBtn}>
+            <ArrowLeft size={15} style={{ marginRight: 4 }} /> Home
+          </button>
           <span style={{ color: t.border }}>|</span>
-          <span style={{ fontWeight: '700', fontSize: '14px', display:'flex', alignItems:'center', gap:'6px' }}><Cpu size={16} style={{color:t.accent}} /> IndiChat-Ai Devices</span>
+          <span style={{ fontWeight: '700', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Cpu size={16} style={{ color: t.accent }} /> My Devices
+          </span>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
-          <button style={ghostBtn} onClick={() => navigate('/chat')}><MessageSquare size={14} style={{marginRight:4}} /> Chat</button>
-          <button style={{ ...ghostBtn, color: '#ef4444' }} onClick={onLogout}><LogOut size={14} /></button>
+          <button style={ghostBtn} onClick={() => navigate('/chat')}>
+            <MessageSquare size={14} style={{ marginRight: 4 }} /> Chat
+          </button>
+          <button style={{ ...ghostBtn, color: '#ef4444' }} onClick={onLogout}>
+            <LogOut size={14} />
+          </button>
         </div>
       </div>
 
@@ -270,5 +278,5 @@ export default function Devices({ user, onLogout }) {
 const inp       = { padding: '10px 14px', background: t.bg3, border: `1px solid ${t.border}`, borderRadius: '8px', color: t.text, fontSize: '14px', outline: 'none', width: '100%', boxSizing: 'border-box' };
 const primaryBtn = { padding: '10px 18px', background: `linear-gradient(135deg, ${t.accent}, ${t.accent2})`, color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600', whiteSpace: 'nowrap' };
 const editBtn   = { padding: '8px 14px', background: t.bg3, border: `1px solid ${t.border}`, color: t.text, borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' };
-const ghostBtn  = { background: 'transparent', border: 'none', color: t.text2, cursor: 'pointer', fontSize: '13px', padding: '8px 12px', borderRadius: '8px' };
+const ghostBtn  = { background: 'rgba(255,255,255,0.04)', border: `1px solid ${t.border}`, color: t.text2, cursor: 'pointer', fontSize: '13px', padding: '7px 12px', borderRadius: '8px', display: 'flex', alignItems: 'center' };
 const lbl       = { display: 'block', fontSize: '11px', color: t.text2, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.5px', fontWeight: '600' };

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { t, c } from '../theme';
+import { ArrowLeft } from 'lucide-react';
 
 const LANGUAGES = [
   { code: 'en-US', label: 'English (US)' },
@@ -94,7 +95,9 @@ export default function DeviceConfig() {
       <div style={{ maxWidth: '680px', margin: '0 auto', padding: '24px 16px' }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '28px' }}>
-          <button style={ghostBtn} onClick={() => navigate('/devices')}>← Back</button>
+          <button style={ghostBtn} onClick={() => navigate('/devices')}>
+            <ArrowLeft size={16} style={{ marginRight: 4 }} /> Back to Devices
+          </button>
           <div>
             <h1 style={{ fontSize: '20px', fontWeight: '700', margin: 0 }}>Device Configuration</h1>
             <div style={{ fontSize: '11px', color: t.text3, marginTop: '2px' }}>IndiChat-Ai powered by IndiTech Corporation</div>
@@ -226,5 +229,5 @@ const inp     = { width: '100%', padding: '10px 14px', background: t.bg3, border
 const ta      = { width: '100%', padding: '10px 14px', background: t.bg3, border: `1px solid ${t.border}`, borderRadius: '8px', color: t.text, fontSize: '14px', outline: 'none', boxSizing: 'border-box', marginBottom: '12px', minHeight: '80px', resize: 'vertical', fontFamily: 'inherit' };
 const sel     = { width: '100%', padding: '10px 14px', background: t.bg3, border: `1px solid ${t.border}`, borderRadius: '8px', color: t.text, fontSize: '14px', outline: 'none', marginBottom: '12px' };
 const lbl     = { display: 'block', fontSize: '11px', color: t.text2, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' };
-const ghostBtn = { background: 'transparent', border: `1px solid ${t.border}`, color: t.text2, borderRadius: '8px', padding: '8px 14px', cursor: 'pointer', fontSize: '13px' };
+const ghostBtn = { background: 'rgba(255,255,255,0.04)', border: `1px solid ${t.border}`, color: t.text2, borderRadius: '8px', padding: '8px 14px', cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center' };
 const saveBtn  = { padding: '12px 28px', background: t.grad, color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '700' };
