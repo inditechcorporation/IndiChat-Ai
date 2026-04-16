@@ -3,7 +3,7 @@ services:
     name: indichat-server
     env: node
     rootDir: server
-    buildCommand: cd ../web && npm install && npm run build && cd ../server && npm install --build-from-source
+    buildCommand: cd ../web && npm install && npm run build && cd ../server && npm install && npm rebuild sqlite3
     startCommand: node index.js
     envVars:
       - key: PORT
