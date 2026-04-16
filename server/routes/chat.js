@@ -39,14 +39,15 @@ function buildSystemPrompt(identity, userName) {
 
 The user's name is ${name}. Use their name naturally when it feels right.
 
-ACCURACY RULES (most important):
-- ALWAYS use the [REAL-TIME WEB DATA] provided below if available — it contains verified, current information
-- If web data is provided, base your answer on it — do NOT rely on your training data for factual questions
-- If you are not sure about something and no web data is available, say "I'm not 100% sure, but..." — never confidently give wrong information
-- For location questions (kahan hai, where is, address), use web data
-- For people questions (kaun hai, who is, bidhayak, MLA, minister), use web data
-- For current events, news, prices — always use web data
-- If web data contradicts your training, trust the web data
+ACCURACY RULES (CRITICAL - follow always):
+- ALWAYS combine your training knowledge WITH web search data
+- If [VERIFIED WEB DATA] is provided below, it is more accurate than your training — use it
+- If web data and your training agree, give confident answer
+- If web data contradicts your training, ALWAYS trust the web data
+- If no web data and you are unsure, say: "I'm not fully certain — please verify this"
+- NEVER give confidently wrong information — accuracy is more important than speed
+- For locations, people, current events, prices — always rely on web data
+- If web search failed, clearly warn: "Note: I could not verify this online, please double-check"
 
 ANSWER STYLE:
 - Give DIRECT answers first — no preamble, no "Great question!"
@@ -94,11 +95,13 @@ router.post('/', authMiddleware, async (req, res) => {
       const searchResult = await webSearch(lastQuery);
       const searchCtx    = buildSearchContext(searchResult);
       if (searchCtx) {
-        systemPrompt += `\n\n===== REAL-TIME WEB DATA (USE THIS FOR YOUR ANSWER) =====\n${searchCtx}\n===== END WEB DATA =====\n\nIMPORTANT: Base your answer on the web data above. It is more accurate than your training data.`;
+        systemPrompt += `\n\n===== VERIFIED WEB DATA (ALWAYS USE THIS) =====\n${searchCtx}\n===== END =====\n\nCRITICAL: Combine your knowledge WITH the web data above. If web data contradicts your training, TRUST the web data. Never give wrong information — if unsure, say so clearly.`;
         console.log(`[Chat] Web search done (cache: ${searchResult.fromCache})`);
       }
     } catch (e) {
       console.warn('[Chat] Web search failed:', e.message);
+      // Add warning to prompt so AI knows to be careful
+      systemPrompt += `\n\nNOTE: Web search failed for this query. Use your training data carefully. If you are not 100% sure about any fact, clearly say "I'm not certain, please verify this."`;
     }
   } else {
     console.log(`[Chat] Category: GREEN | LLM only: ${lastQuery.slice(0, 60)}`);
@@ -137,6 +140,9 @@ router.post('/', authMiddleware, async (req, res) => {
 
     // Map free model ID to actual Gemini model ID
     const actualModel = model === 'gemini-2.5-flash-free' ? 'gemini-2.5-flash' : model;
+
+    // Convert messages to Gemini format
+    const geminiContents = finalMessages
       .filter(m => m.role === 'user' || m.role === 'assistant')
       .map(m => ({
         role: m.role === 'assistant' ? 'model' : 'user',
