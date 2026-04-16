@@ -26,13 +26,25 @@ try {
 
 /**
  * Check if query needs web search
- * Keywords that indicate real-time info needed
+ * Keywords that indicate real-time or factual info needed
  */
 function needsWebSearch(query) {
   const keywords = [
+    // English
     'news', 'today', 'latest', 'current', 'now', 'price', 'stock',
-    'weather', 'update', 'recent', 'aaj', 'abhi', 'khabar', 'taza',
-    '2024', '2025', '2026', 'live', 'breaking', 'trending'
+    'weather', 'update', 'recent', 'live', 'breaking', 'trending',
+    '2024', '2025', '2026',
+    'who is', 'who are', 'what is', 'when did', 'where is',
+    'mla', 'mp', 'minister', 'cm', 'pm', 'president', 'election',
+    'winner', 'result', 'score', 'match',
+    // Hindi
+    'aaj', 'abhi', 'khabar', 'taza', 'kaun hai', 'kya hai',
+    'bidhayak', 'saansad', 'mantri', 'mukhyamantri', 'pradhanmantri',
+    'chunav', 'neta', 'party', 'sarkar', 'vidhayak', 'vidhan',
+    'jeet', 'haar', 'result', 'natija',
+    // General factual
+    'capital', 'population', 'founded', 'born', 'died', 'age',
+    'headquarter', 'ceo', 'owner', 'chairman'
   ];
   const q = query.toLowerCase();
   return keywords.some(k => q.includes(k));

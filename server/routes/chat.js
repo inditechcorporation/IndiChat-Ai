@@ -72,16 +72,18 @@ router.post('/', authMiddleware, async (req, res) => {
 
   if (lastQuery && needsWebSearch(lastQuery)) {
     try {
+      console.log('[Chat] Web search triggered for:', lastQuery.slice(0, 60));
       const searchResult = await webSearch(lastQuery);
       const searchCtx    = buildSearchContext(searchResult);
       if (searchCtx) {
-        systemPrompt += `\n\n[REAL-TIME WEB DATA]:\n${searchCtx}\nUse this data to give accurate, up-to-date answers.`;
-        console.log(`[Chat] Web search used (cache: ${searchResult.fromCache})`);
+        systemPrompt += `\n\n[REAL-TIME WEB DATA - Use this for accurate answer]:\n${searchCtx}`;
+        console.log(`[Chat] Web search done (cache: ${searchResult.fromCache})`);
       }
     } catch (e) {
       console.warn('[Chat] Web search failed:', e.message);
-      // Continue without search — don't break chat
     }
+  } else {
+    console.log('[Chat] No web search needed for:', lastQuery.slice(0, 60));
   }
 
   // Check if any message has image content (vision request)
