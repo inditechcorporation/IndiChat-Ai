@@ -311,6 +311,37 @@ export default function Chat({ user }) {
     localStorage.setItem('indi_voice_lang', code);
   };
 
+  // Render message content — detect URLs and add copy/open buttons
+  const renderMessageContent = (content) => {
+    if (!content) return null;
+    const clean = content.replace(/\*\*(.*?)\*\*/g, '$1');
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = clean.split(urlRegex);
+    return parts.map((part, i) => {
+      if (urlRegex.test(part)) {
+        urlRegex.lastIndex = 0;
+        return (
+          <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+            <span style={{ color: t.accent, wordBreak: 'break-all' }}>{part}</span>
+            <button
+              onClick={() => window.open(part, '_blank', 'noopener,noreferrer')}
+              style={{ background: `${t.accent}22`, border: `1px solid ${t.accent}44`, color: t.accent, borderRadius: '4px', padding: '1px 6px', fontSize: '11px', cursor: 'pointer', flexShrink: 0 }}
+              title="Open link">
+              Open
+            </button>
+            <button
+              onClick={() => navigator.clipboard.writeText(part)}
+              style={{ background: 'rgba(255,255,255,0.06)', border: `1px solid ${t.border}`, color: t.text2, borderRadius: '4px', padding: '1px 6px', fontSize: '11px', cursor: 'pointer', flexShrink: 0 }}
+              title="Copy link">
+              Copy
+            </button>
+          </span>
+        );
+      }
+      return <span key={i}>{part}</span>;
+    });
+  };
+
   // ── Model Select Screen ───────────────────────────────────────────
   if (step === 'select') {
     const hint = model && !model.free ? KEY_HINTS[model.provider] : null;
@@ -537,7 +568,7 @@ export default function Chat({ user }) {
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '15px', lineHeight: 1.75, color: msg.error ? t.danger : t.text, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                      {msg.content ? msg.content.replace(/\*\*(.*?)\*\*/g, '$1') : ''}
+                      {renderMessageContent(msg.content)}
                     </div>
                     {!msg.error && (
                       <button onClick={() => speak(msg.content)} style={{ background: 'transparent', border: 'none', color: t.text3, cursor: 'pointer', fontSize: '11px', padding: '3px 0 0', display: 'flex', alignItems: 'center', gap: '3px', marginTop: '2px' }}>

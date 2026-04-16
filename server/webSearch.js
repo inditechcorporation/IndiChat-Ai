@@ -25,37 +25,83 @@ try {
 }
 
 /**
- * Check if query needs web search
- * Skip conversational, identity, and math queries
+ * Smart Query Classifier
+ * Category 1 (RED)   — Real-time → ALWAYS search
+ * Category 2 (YELLOW) — Uncertain → search if confidence < 90%
+ * Category 3 (GREEN)  — Stable knowledge → LLM only
  */
-function needsWebSearch(query) {
-  if (!query || query.trim().length < 3) return false;
+function classifyQuery(query) {
+  if (!query || query.trim().length < 3) return 'GREEN';
 
   const q = query.trim().toLowerCase();
 
-  // Skip pure conversational/greeting queries
-  const skipPatterns = [
-    /^(hi|hello|hey|hii|helo|namaste|namaskar|salam|salaam)[\s!.?]*$/i,
-    /^(how are you|kaise ho|kya haal|what's up|sup|ok|okay|thanks|thank you|shukriya|dhanyawad)[\s!.?]*$/i,
-    /^(yes|no|haan|nahi|nope|yep|sure|bilkul|theek hai|thik hai)[\s!.?]*$/i,
-    /^(bye|goodbye|alvida|tata|good night|good morning|good evening)[\s!.?]*$/i,
-  ];
-  if (skipPatterns.some(p => p.test(q))) return false;
-
-  // Skip identity questions — AI should answer these itself
+  // Identity questions — always GREEN (AI answers itself)
   const identityPatterns = [
     /^(tum|aap|you|tu)\s+(kaun|kya|kon)\s+(ho|hain|hai|are)/i,
     /^(who are you|what are you|kaun ho tum|aap kaun hain)/i,
-    /^(your name|tumhara naam|aapka naam|apna naam)/i,
-    /^(introduce yourself|apna parichay|apne baare mein)/i,
+    /^(your name|tumhara naam|aapka naam)/i,
+    /^(introduce yourself|apna parichay)/i,
   ];
-  if (identityPatterns.some(p => p.test(q))) return false;
+  if (identityPatterns.some(p => p.test(q))) return 'GREEN';
 
-  // Skip very short math/calculation queries
-  if (/^[\d\s+\-*/()=.]+$/.test(q)) return false;
+  // Pure conversational — GREEN
+  const conversational = [
+    /^(hi|hello|hey|hii|namaste|namaskar|salam)[\s!.?]*$/i,
+    /^(how are you|kaise ho|kya haal|thanks|thank you|shukriya)[\s!.?]*$/i,
+    /^(yes|no|haan|nahi|ok|okay|sure|bilkul|theek hai)[\s!.?]*$/i,
+    /^(bye|goodbye|alvida|good night|good morning)[\s!.?]*$/i,
+  ];
+  if (conversational.some(p => p.test(q))) return 'GREEN';
 
-  // Everything else needs web search for accuracy
-  return true;
+  // Pure math/code — GREEN
+  if (/^[\d\s+\-*/()=.%^]+$/.test(q)) return 'GREEN';
+  if (/^(calculate|solve|code|program|write a function|explain|define|what is|kya hota hai|matlab|difference between)/i.test(q)) return 'GREEN';
+
+  // Category 1 RED — Real-time, must search
+  const redKeywords = [
+    'latest', 'today', 'abhi', 'aaj', 'now', 'current', 'recent', 'update',
+    'news', 'khabar', 'taza', 'live', 'breaking', 'trending',
+    'price', 'rate', 'stock', 'weather', 'mausam',
+    'result', 'score', 'match', 'election', 'chunav',
+    'winner', 'jeet', 'haar', '2025', '2026',
+    'announced', 'launched', 'released',
+  ];
+  if (redKeywords.some(k => q.includes(k))) return 'RED';
+
+  // Category 2 YELLOW — Uncertain, search if needed
+  const yellowKeywords = [
+    // People & places
+    'kaun hai', 'who is', 'where is', 'kahan hai', 'kahan par',
+    'bidhayak', 'vidhayak', 'mla', 'mp', 'minister', 'mantri',
+    'cm', 'pm', 'president', 'governor', 'mukhyamantri',
+    'neta', 'party', 'sarkar',
+    // Locations
+    'address', 'location', 'distance', 'capital', 'headquarter',
+    // Facts about people
+    'born', 'died', 'age', 'wife', 'husband', 'father', 'mother',
+    'ceo', 'owner', 'founder', 'chairman',
+    // General factual
+    'population', 'area', 'height', 'length', 'speed',
+    'history', 'itihas', 'founded', 'established',
+  ];
+  if (yellowKeywords.some(k => q.includes(k))) return 'YELLOW';
+
+  // Default — if question is factual-sounding, use YELLOW
+  if (q.length > 20 && (q.includes('?') || q.includes('kya') || q.includes('kaun') || q.includes('kahan') || q.includes('kab') || q.includes('kitna'))) {
+    return 'YELLOW';
+  }
+
+  return 'GREEN';
+}
+
+/**
+ * Check if query needs web search based on category
+ */
+function needsWebSearch(query) {
+  const category = classifyQuery(query);
+  if (category === 'RED') return true;
+  if (category === 'YELLOW') return true;
+  return false; // GREEN — LLM only
 }
 
 /**
@@ -151,4 +197,4 @@ function buildSearchContext(searchResult) {
   return ctx;
 }
 
-module.exports = { webSearch, needsWebSearch, buildSearchContext };
+module.exports = { webSearch, needsWebSearch, buildSearchContext, classifyQuery };

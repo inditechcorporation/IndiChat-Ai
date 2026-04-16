@@ -2,7 +2,7 @@ const express = require('express');
 const authMiddleware = require('../middleware/auth');
 const { getKey, markExhausted } = require('../keyRotator');
 const { all } = require('../db');
-const { webSearch, needsWebSearch, buildSearchContext } = require('../webSearch');
+const { webSearch, needsWebSearch, buildSearchContext, classifyQuery } = require('../webSearch');
 const router = express.Router();
 
 const GROQ_FREE_MODELS = [
@@ -84,8 +84,9 @@ router.post('/', authMiddleware, async (req, res) => {
   const lastQuery   = typeof lastUserMsg?.content === 'string' ? lastUserMsg.content : '';
 
   if (lastQuery && needsWebSearch(lastQuery)) {
+    const category = classifyQuery(lastQuery);
     try {
-      console.log('[Chat] Web search triggered for:', lastQuery.slice(0, 60));
+      console.log(`[Chat] Category: ${category} | Searching: ${lastQuery.slice(0, 60)}`);
       const searchResult = await webSearch(lastQuery);
       const searchCtx    = buildSearchContext(searchResult);
       if (searchCtx) {
@@ -96,7 +97,7 @@ router.post('/', authMiddleware, async (req, res) => {
       console.warn('[Chat] Web search failed:', e.message);
     }
   } else {
-    console.log('[Chat] No web search needed for:', lastQuery.slice(0, 60));
+    console.log(`[Chat] Category: GREEN | LLM only: ${lastQuery.slice(0, 60)}`);
   }
 
   // Check if any message has image content (vision request)
