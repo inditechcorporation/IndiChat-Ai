@@ -50,7 +50,7 @@ npm run dev        # development
 npm run build      # production (copies to server)
 ```
 
-Open: http://localhost:5173
+Open: https://indichat-ai.onrender.com/
 
 ### 3. Firmware
 ```bash
