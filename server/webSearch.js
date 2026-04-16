@@ -25,6 +25,21 @@ try {
 }
 
 /**
+ * Safety check — if ANY of these keywords present, MUST use web search
+ * Never answer from LLM alone for these
+ */
+function isUnsafeToAnswerFromLLM(q) {
+  return [
+    'latest', 'today', 'news', 'current', 'update', 'price',
+    'who is', 'result', 'where is',
+    // Hindi equivalents
+    'kahan hai', 'kahan par', 'kaha hai', 'kaha par',
+    'kaun hai', 'kaun hain', 'kya hai',
+    'aaj', 'abhi', 'taza', 'khabar',
+  ].some(k => q.toLowerCase().includes(k));
+}
+
+/**
  * Smart Query Classifier
  * Category 1 (RED)   — Real-time → ALWAYS search
  * Category 2 (YELLOW) — Uncertain → search if confidence < 90%
@@ -95,13 +110,14 @@ function classifyQuery(query) {
 }
 
 /**
- * Check if query needs web search based on category
+ * Check if query needs web search based on category + safety check
  */
 function needsWebSearch(query) {
+  if (!query) return false;
+  // Safety net — these MUST always be searched
+  if (isUnsafeToAnswerFromLLM(query)) return true;
   const category = classifyQuery(query);
-  if (category === 'RED') return true;
-  if (category === 'YELLOW') return true;
-  return false; // GREEN — LLM only
+  return category === 'RED' || category === 'YELLOW';
 }
 
 /**
@@ -197,4 +213,4 @@ function buildSearchContext(searchResult) {
   return ctx;
 }
 
-module.exports = { webSearch, needsWebSearch, buildSearchContext, classifyQuery };
+module.exports = { webSearch, needsWebSearch, buildSearchContext, classifyQuery, isUnsafeToAnswerFromLLM };
