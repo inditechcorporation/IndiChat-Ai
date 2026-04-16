@@ -101,6 +101,16 @@ export default function Chat({ user }) {
   // Save sessions on change
   useEffect(() => { saveSessions(userId, sessions); }, [sessions, userId]);
 
+  // Mobile keyboard fix — MUST be at top level, before any conditional returns
+  useEffect(() => {
+    const setVh = () => {
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    };
+    setVh();
+    window.addEventListener('resize', setVh);
+    return () => window.removeEventListener('resize', setVh);
+  }, []);
+
   // Scroll messages div (not page) on new message
   useEffect(() => {
     if (msgsRef.current) msgsRef.current.scrollTop = msgsRef.current.scrollHeight;
@@ -420,16 +430,6 @@ export default function Chat({ user }) {
       </div>
     );
   }
-
-  // Mobile keyboard fix — use actual visible height (must be before any early returns)
-  useEffect(() => {
-    const setVh = () => {
-      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
-    };
-    setVh();
-    window.addEventListener('resize', setVh);
-    return () => window.removeEventListener('resize', setVh);
-  }, []);
 
   // ── Chat Screen ───────────────────────────────────────────────────
   if (!model) { setStep('select'); return null; }

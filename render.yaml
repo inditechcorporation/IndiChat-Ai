@@ -30,3 +30,9 @@ services:
         sync: false
       - key: SITE_URL
         sync: false   # set to your Vercel URL after deploy
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false

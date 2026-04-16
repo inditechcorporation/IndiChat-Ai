@@ -2,6 +2,7 @@ const express = require('express');
 const authMiddleware = require('../middleware/auth');
 const { getKey, markExhausted } = require('../keyRotator');
 const { all } = require('../db');
+const { webSearch, needsWebSearch, buildSearchContext } = require('../webSearch');
 const router = express.Router();
 
 const GROQ_FREE_MODELS = [
@@ -63,7 +64,25 @@ router.post('/', authMiddleware, async (req, res) => {
   // Inject platform identity as system prompt
   const identity = await getPlatformIdentity();
   const userName = req.user?.name || req.user?.email?.split('@')[0] || '';
-  const systemPrompt = buildSystemPrompt(identity, userName);
+  let systemPrompt = buildSystemPrompt(identity, userName);
+
+  // Web search — check if last user message needs real-time info
+  const lastUserMsg = messages.filter(m => m.role === 'user').pop();
+  const lastQuery   = typeof lastUserMsg?.content === 'string' ? lastUserMsg.content : '';
+
+  if (lastQuery && needsWebSearch(lastQuery)) {
+    try {
+      const searchResult = await webSearch(lastQuery);
+      const searchCtx    = buildSearchContext(searchResult);
+      if (searchCtx) {
+        systemPrompt += `\n\n[REAL-TIME WEB DATA]:\n${searchCtx}\nUse this data to give accurate, up-to-date answers.`;
+        console.log(`[Chat] Web search used (cache: ${searchResult.fromCache})`);
+      }
+    } catch (e) {
+      console.warn('[Chat] Web search failed:', e.message);
+      // Continue without search — don't break chat
+    }
+  }
 
   // Check if any message has image content (vision request)
   const hasImage = messages.some(m => Array.isArray(m.content));
