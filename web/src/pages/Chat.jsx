@@ -423,8 +423,19 @@ export default function Chat({ user }) {
 
   // ── Chat Screen ───────────────────────────────────────────────────
   if (!model) { setStep('select'); return null; }
+
+  // Mobile keyboard fix — use actual visible height
+  useEffect(() => {
+    const setVh = () => {
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    };
+    setVh();
+    window.addEventListener('resize', setVh);
+    return () => window.removeEventListener('resize', setVh);
+  }, []);
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: t.bg, color: t.text, fontFamily: "'Inter',-apple-system,sans-serif", overflow: 'hidden', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+    <div className="chat-root" style={{ display: 'flex', flexDirection: 'column', height: 'calc(var(--vh, 1vh) * 100)', background: t.bg, color: t.text, fontFamily: "'Inter',-apple-system,sans-serif", overflow: 'hidden', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
       {/* Sidebar overlay */}
       {sidebarOpen && (
         <div onClick={() => setSidebarOpen(false)}
@@ -554,7 +565,7 @@ export default function Chat({ user }) {
         </div>
 
         {/* Input — fixed, never scrolls */}
-        <div style={{ padding: '10px 14px', borderTop: `1px solid ${t.border}`, background: t.bg, flexShrink: 0 }}>
+        <div style={{ padding: '10px 14px', paddingBottom: 'max(10px, env(safe-area-inset-bottom))', borderTop: `1px solid ${t.border}`, background: t.bg, flexShrink: 0 }}>
           {image && (
             <div style={{ maxWidth: '760px', margin: '0 auto 8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <img src={image.preview} alt="preview" style={{ height: '48px', borderRadius: '6px', border: `1px solid ${t.border}` }} />
@@ -578,7 +589,12 @@ export default function Chat({ user }) {
             <textarea ref={inputRef}
               style={{ flex: 1, background: 'transparent', border: 'none', color: t.text, fontSize: '15px', outline: 'none', resize: 'none', lineHeight: 1.5, maxHeight: '100px', minHeight: '24px', fontFamily: 'inherit' }}
               placeholder="Message IndiChat-Ai..."
+              inputMode="text"
               value={input} rows={1}
+              onFocus={() => {
+                // Scroll input into view when keyboard opens on mobile
+                setTimeout(() => inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 300);
+              }}
               onChange={e => { setInput(e.target.value); e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 100) + 'px'; }}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input); } }}
             />
@@ -596,6 +612,10 @@ export default function Chat({ user }) {
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: ${t.border}; border-radius: 2px; }
+        /* Mobile keyboard fix */
+        @supports (-webkit-touch-callout: none) {
+          .chat-root { height: -webkit-fill-available !important; }
+        }
       `}</style>
     </div>
   );
