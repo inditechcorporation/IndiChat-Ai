@@ -127,7 +127,7 @@ export default function Chat({ user }) {
 
   const startNewChat = () => {
     const id = Date.now().toString();
-    const welcome = { id: 'w_' + id, role: 'assistant', content: `Welcome back, **${userName}**! How can I help you today? 😊`, ts: Date.now() };
+    const welcome = { id: 'w_' + id, role: 'assistant', content: `Welcome back, ${userName}! How can I help you today?`, ts: Date.now() };
     setActiveId(id);
     setMessages([welcome]);
     setSessions(prev => [{ id, title: 'New Chat', messages: [welcome], ts: Date.now() }, ...prev]);
@@ -139,7 +139,7 @@ export default function Chat({ user }) {
     if (!model.free) localStorage.setItem(`indi_key_${model.provider}`, apiKey);
     setStep('chat');
     const id = Date.now().toString();
-    const welcome = { id: 'w_' + id, role: 'assistant', content: `Welcome back, **${userName}**! How can I help you today? 😊`, ts: Date.now() };
+    const welcome = { id: 'w_' + id, role: 'assistant', content: `Welcome back, ${userName}! How can I help you today?`, ts: Date.now() };
     setActiveId(id);
     setMessages([welcome]);
     setSessions(prev => [{ id, title: 'New Chat', messages: [welcome], ts: Date.now() }, ...prev]);

@@ -229,7 +229,7 @@ export default function Admin({ user, onLogout }) {
 
             {/* Key Status */}
             <div style={{ background: t.bg2, border: `1px solid ${t.border}`, borderRadius: '12px', padding: '20px' }}>
-              <div style={{ fontWeight: '700', marginBottom: '14px', fontSize: '14px' }}>🔑 Groq Key Status</div>
+              <div style={{ fontWeight: '700', marginBottom: '14px', fontSize: '14px' }}>Groq Key Status</div>
               {stats.keys.length === 0 ? (
                 <div style={{ color: t.text2, fontSize: '13px' }}>No keys configured. Go to Groq Keys tab to add.</div>
               ) : (
@@ -252,7 +252,7 @@ export default function Admin({ user, onLogout }) {
         {/* ── Groq Keys Tab ── */}
         {tab === 'keys' && (
           <div style={{ background: t.bg2, border: `1px solid ${t.border}`, borderRadius: '12px', padding: '24px' }}>
-            <div style={{ fontWeight: '700', fontSize: '15px', marginBottom: '6px' }}>🔑 Groq API Keys</div>
+            <div style={{ fontWeight: '700', fontSize: '15px', marginBottom: '6px' }}>Groq API Keys</div>
             <div style={{ fontSize: '13px', color: t.text2, marginBottom: '20px' }}>
               Add multiple keys — system auto-rotates when one hits rate limit. Get free keys at{' '}
               <a href="https://console.groq.com" target="_blank" rel="noreferrer" style={{ color: t.accent }}>console.groq.com</a>
@@ -281,7 +281,7 @@ export default function Admin({ user, onLogout }) {
             />
             <button style={{ ...primaryBtn, opacity: newKeys.trim() && !saving ? 1 : 0.5 }}
               onClick={saveKeys} disabled={!newKeys.trim() || saving}>
-              {saving ? 'Saving...' : '💾 Save Keys'}
+              {saving ? 'Saving...' : 'Save Keys'}
             </button>
           </div>
         )}
@@ -289,7 +289,7 @@ export default function Admin({ user, onLogout }) {
         {/* ── AI Identity Tab ── */}
         {tab === 'identity' && (
           <div style={{ background: t.bg2, border: `1px solid ${t.border}`, borderRadius: '12px', padding: '24px' }}>
-            <div style={{ fontWeight: '700', fontSize: '15px', marginBottom: '6px' }}>🤖 Platform AI Identity</div>
+            <div style={{ fontWeight: '700', fontSize: '15px', marginBottom: '6px' }}>Platform AI Identity</div>
             <div style={{ fontSize: '13px', color: t.text2, marginBottom: '20px' }}>
               This applies to <strong style={{ color: t.text }}>Live Chat</strong> on the website. Device chat uses each device's own config.
             </div>
@@ -313,11 +313,11 @@ export default function Admin({ user, onLogout }) {
               onChange={e => setSettings(s => ({ ...s, creator_intro: e.target.value }))} />
 
             <div style={{ background: t.bg3, border: `1px solid ${t.border}`, borderRadius: '8px', padding: '12px', marginBottom: '16px', fontSize: '12px', color: t.text2 }}>
-              💡 Preview: "My name is <strong style={{ color: t.text }}>{settings.ai_name || 'IndiChat'}</strong>. {settings.ai_intro || '...'} I was created by <strong style={{ color: t.text }}>{settings.creator_name || 'IndiTech Corporation'}</strong>."
+              Preview: "My name is <strong style={{ color: t.text }}>{settings.ai_name || 'IndiChat'}</strong>. {settings.ai_intro || '...'} I was created by <strong style={{ color: t.text }}>{settings.creator_name || 'IndiTech Corporation'}</strong>."
             </div>
 
             <button style={{ ...primaryBtn, opacity: !saving ? 1 : 0.5 }} onClick={saveSettings} disabled={saving}>
-              {saving ? 'Saving...' : '💾 Save Identity'}
+              {saving ? 'Saving...' : 'Save Identity'}
             </button>
           </div>
         )}
@@ -325,7 +325,7 @@ export default function Admin({ user, onLogout }) {
         {/* ── Users Tab ── */}
         {tab === 'users' && (
           <div style={{ background: t.bg2, border: `1px solid ${t.border}`, borderRadius: '12px', padding: '24px' }}>
-            <div style={{ fontWeight: '700', fontSize: '15px', marginBottom: '16px' }}>👥 All Users ({users.length})</div>
+            <div style={{ fontWeight: '700', fontSize: '15px', marginBottom: '16px' }}>All Users ({users.length})</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {users.map(u => (
                 <UserRow key={u.id} u={u} currentUserId={user?.id} onToggleAdmin={toggleAdmin} onMsg={showMsg} onUpdateName={updateUserName} />
