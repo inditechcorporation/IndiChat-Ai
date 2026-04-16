@@ -26,28 +26,28 @@ try {
 
 /**
  * Check if query needs web search
- * Keywords that indicate real-time or factual info needed
+ * Skip only simple conversational/greeting queries
+ * Everything else — search for accuracy
  */
 function needsWebSearch(query) {
-  const keywords = [
-    // English
-    'news', 'today', 'latest', 'current', 'now', 'price', 'stock',
-    'weather', 'update', 'recent', 'live', 'breaking', 'trending',
-    '2024', '2025', '2026',
-    'who is', 'who are', 'what is', 'when did', 'where is',
-    'mla', 'mp', 'minister', 'cm', 'pm', 'president', 'election',
-    'winner', 'result', 'score', 'match',
-    // Hindi
-    'aaj', 'abhi', 'khabar', 'taza', 'kaun hai', 'kya hai',
-    'bidhayak', 'saansad', 'mantri', 'mukhyamantri', 'pradhanmantri',
-    'chunav', 'neta', 'party', 'sarkar', 'vidhayak', 'vidhan',
-    'jeet', 'haar', 'result', 'natija',
-    // General factual
-    'capital', 'population', 'founded', 'born', 'died', 'age',
-    'headquarter', 'ceo', 'owner', 'chairman'
+  if (!query || query.trim().length < 3) return false;
+
+  // Skip only pure conversational queries (no factual content)
+  const skipPatterns = [
+    /^(hi|hello|hey|hii|helo|namaste|namaskar|salam|salaam)[\s!.?]*$/i,
+    /^(how are you|kaise ho|kya haal|what's up|sup|ok|okay|thanks|thank you|shukriya|dhanyawad)[\s!.?]*$/i,
+    /^(yes|no|haan|nahi|nope|yep|sure|bilkul|theek hai|thik hai)[\s!.?]*$/i,
+    /^(bye|goodbye|alvida|tata|good night|good morning|good evening)[\s!.?]*$/i,
   ];
-  const q = query.toLowerCase();
-  return keywords.some(k => q.includes(k));
+
+  const q = query.trim();
+  if (skipPatterns.some(p => p.test(q))) return false;
+
+  // Skip very short math/calculation queries
+  if (/^[\d\s+\-*/()=.]+$/.test(q)) return false;
+
+  // Everything else needs web search for accuracy
+  return true;
 }
 
 /**
