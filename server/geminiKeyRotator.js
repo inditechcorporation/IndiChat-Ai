@@ -13,12 +13,23 @@ async function loadGeminiKeys() {
   try {
     const { all } = require('./db');
     const rows = await all("SELECT value FROM platform_settings WHERE key = 'gemini_api_keys'");
-    if (rows && rows[0] && rows[0].value) {
-      geminiKeys = rows[0].value.split(',').map(k => k.trim()).filter(k => k.startsWith('AIza'));
-      console.log(`[GeminiRotator] Loaded ${geminiKeys.length} Gemini key(s)`);
+    if (rows && rows[0] && rows[0].value && rows[0].value.trim()) {
+      const dbKeys = rows[0].value.split(',').map(k => k.trim()).filter(k => k.startsWith('AIza'));
+      if (dbKeys.length > 0) {
+        geminiKeys = dbKeys;
+        console.log(`[GeminiRotator] Loaded ${geminiKeys.length} Gemini key(s) from DB`);
+        return;
+      }
     }
   } catch (e) {
-    console.warn('[GeminiRotator] Could not load keys:', e.message);
+    console.warn('[GeminiRotator] Could not load keys from DB:', e.message);
+  }
+
+  // Fallback to env var
+  const envKeys = (process.env.GEMINI_API_KEY || '').split(',').map(k => k.trim()).filter(k => k.length > 10);
+  if (envKeys.length > 0) {
+    geminiKeys = envKeys;
+    console.log(`[GeminiRotator] Loaded ${geminiKeys.length} Gemini key(s) from ENV`);
   }
 }
 
