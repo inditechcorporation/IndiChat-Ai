@@ -26,22 +26,30 @@ try {
 
 /**
  * Check if query needs web search
- * Skip only simple conversational/greeting queries
- * Everything else — search for accuracy
+ * Skip conversational, identity, and math queries
  */
 function needsWebSearch(query) {
   if (!query || query.trim().length < 3) return false;
 
-  // Skip only pure conversational queries (no factual content)
+  const q = query.trim().toLowerCase();
+
+  // Skip pure conversational/greeting queries
   const skipPatterns = [
     /^(hi|hello|hey|hii|helo|namaste|namaskar|salam|salaam)[\s!.?]*$/i,
     /^(how are you|kaise ho|kya haal|what's up|sup|ok|okay|thanks|thank you|shukriya|dhanyawad)[\s!.?]*$/i,
     /^(yes|no|haan|nahi|nope|yep|sure|bilkul|theek hai|thik hai)[\s!.?]*$/i,
     /^(bye|goodbye|alvida|tata|good night|good morning|good evening)[\s!.?]*$/i,
   ];
-
-  const q = query.trim();
   if (skipPatterns.some(p => p.test(q))) return false;
+
+  // Skip identity questions — AI should answer these itself
+  const identityPatterns = [
+    /^(tum|aap|you|tu)\s+(kaun|kya|kon)\s+(ho|hain|hai|are)/i,
+    /^(who are you|what are you|kaun ho tum|aap kaun hain)/i,
+    /^(your name|tumhara naam|aapka naam|apna naam)/i,
+    /^(introduce yourself|apna parichay|apne baare mein)/i,
+  ];
+  if (identityPatterns.some(p => p.test(q))) return false;
 
   // Skip very short math/calculation queries
   if (/^[\d\s+\-*/()=.]+$/.test(q)) return false;
