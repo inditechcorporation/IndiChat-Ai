@@ -366,10 +366,15 @@ export default function Chat({ user }) {
   // ── Chat Screen ───────────────────────────────────────────────────
   if (!model) { setStep('select'); return null; }
   return (
-    <div style={{ ...pg, display: 'flex', height: '100vh' }}>
+    <div style={{ ...pg, display: 'flex', height: '100vh', position: 'relative' }}>
+      {/* Sidebar overlay for mobile */}
+      {sidebarOpen && (
+        <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 40 }} />
+      )}
       {/* Sidebar */}
       {sidebarOpen && (
-        <div style={{ width: '240px', background: t.bg2, borderRight: `1px solid ${t.border}`, display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+        <div className="sidebar" style={{ width: '240px', background: t.bg2, borderRight: `1px solid ${t.border}`, display: 'flex', flexDirection: 'column', flexShrink: 0, zIndex: 50 }}>
           <div style={{ padding: '16px', borderBottom: `1px solid ${t.border}` }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <IndiChatLogo size={28} />
@@ -416,6 +421,7 @@ export default function Chat({ user }) {
           </div>
           {/* Language selector */}
           <select
+            className="lang-select"
             value={voiceLang}
             onChange={e => changeLang(e.target.value)}
             title="Voice language for mic & speak"
@@ -424,7 +430,7 @@ export default function Chat({ user }) {
           </select>
           {/* Response time indicator */}
           {responseTime && (
-            <div style={{ fontSize: '11px', color: t.text2, background: t.bg2, border: `1px solid ${t.border}`, borderRadius: '6px', padding: '4px 8px' }}>
+            <div className="resp-time" style={{ fontSize: '11px', color: t.text2, background: t.bg2, border: `1px solid ${t.border}`, borderRadius: '6px', padding: '4px 8px' }}>
               {responseTime < 1000 ? `${responseTime}ms` : `${(responseTime/1000).toFixed(1)}s`}
             </div>
           )}
@@ -446,7 +452,7 @@ export default function Chat({ user }) {
             </div>
           )}
           {messages.map(msg => (
-            <div key={msg.id} style={{ maxWidth: '720px', margin: '0 auto', padding: '8px 24px' }}>
+            <div key={msg.id} style={{ maxWidth: '720px', margin: '0 auto', padding: '6px 12px' }}>
               {msg.role === 'user' ? (
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '4px' }}>
                   <div style={{ background: t.bg3, border: `1px solid ${t.border}`, borderRadius: '16px 16px 4px 16px', padding: '10px 16px', maxWidth: '80%', fontSize: '14px', lineHeight: 1.6 }}>
@@ -481,7 +487,7 @@ export default function Chat({ user }) {
             </div>
           ))}
           {loading && (
-            <div style={{ maxWidth: '720px', margin: '0 auto', padding: '8px 24px', display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <div style={{ maxWidth: '720px', margin: '0 auto', padding: '6px 12px', display: 'flex', gap: '12px', alignItems: 'center' }}>
               <div style={{ width: '28px', height: '28px', background: `${model.color}22`, border: `1px solid ${model.color}44`, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <ProviderIcon provider={model.provider} size={13} />
               </div>
@@ -495,7 +501,7 @@ export default function Chat({ user }) {
         </div>
 
         {/* Input */}
-        <div style={{ padding: '16px 24px', borderTop: `1px solid ${t.border}` }}>
+        <div style={{ padding: '12px 16px', borderTop: `1px solid ${t.border}` }}>
           {/* Image preview */}
           {image && (
             <div style={{ maxWidth: '720px', margin: '0 auto 8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -503,10 +509,10 @@ export default function Chat({ user }) {
               <button onClick={() => setImage(null)} style={{ background: '#ef444422', border: '1px solid #ef444444', color: '#ef4444', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', fontSize: '12px' }}>✕ Remove</button>
             </div>
           )}
-          <div style={{ maxWidth: '720px', margin: '0 auto', display: 'flex', gap: '10px', alignItems: 'flex-end', background: t.bg2, border: `1px solid ${t.border}`, borderRadius: '12px', padding: '10px 14px' }}>
+          <div style={{ maxWidth: '720px', margin: '0 auto', display: 'flex', gap: '8px', alignItems: 'flex-end', background: t.bg2, border: `1px solid ${t.border}`, borderRadius: '12px', padding: '8px 12px' }}>
             <button onClick={toggleMic}
               title={`Voice input: ${LANGUAGES.find(l=>l.code===voiceLang)?.label || voiceLang}`}
-              style={{ background: listening ? '#ef444422' : 'transparent', border: `1px solid ${listening ? t.danger : t.border}`, borderRadius: '8px', padding: '8px', cursor: 'pointer', fontSize: '16px', color: listening ? t.danger : t.text2, flexShrink: 0 }}>
+              style={{ background: listening ? '#ef444422' : 'transparent', border: `1px solid ${listening ? t.danger : t.border}`, borderRadius: '8px', padding: '7px', cursor: 'pointer', color: listening ? t.danger : t.text2, flexShrink: 0 }}>
               {listening ? <MicOff size={18} /> : <Mic size={18} />}
             </button>
             {/* Image upload — only for vision models */}
@@ -515,7 +521,7 @@ export default function Chat({ user }) {
                 <input ref={imgRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImagePick} />
                 <button onClick={() => imgRef.current?.click()}
                   title="Upload image"
-                  style={{ background: image ? `${t.accent}22` : 'transparent', border: `1px solid ${image ? t.accent : t.border}`, borderRadius: '8px', padding: '8px', cursor: 'pointer', fontSize: '16px', color: image ? t.accent : t.text2, flexShrink: 0 }}>
+                  style={{ background: image ? `${t.accent}22` : 'transparent', border: `1px solid ${image ? t.accent : t.border}`, borderRadius: '8px', padding: '7px', cursor: 'pointer', color: image ? t.accent : t.text2, flexShrink: 0 }}>
                   <ImagePlus size={18} />
                 </button>
               </>
@@ -534,8 +540,8 @@ export default function Chat({ user }) {
               <Send size={16} />
             </button>
           </div>
-          <div style={{ textAlign: 'center', fontSize: '11px', color: t.text3, marginTop: '8px' }}>
-            IndiChat-Ai · IndiTech Corporation · Enter to send · Shift+Enter for new line
+          <div className="hint-text" style={{ textAlign: 'center', fontSize: '11px', color: t.text3, marginTop: '6px' }}>
+            Enter to send · Shift+Enter for new line
           </div>
         </div>
       </div>
@@ -544,6 +550,18 @@ export default function Chat({ user }) {
         @keyframes pulse { 0%,80%,100%{opacity:.3;transform:scale(.8)} 40%{opacity:1;transform:scale(1)} }
         textarea::placeholder { color: ${t.text3}; }
         ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: ${t.border}; border-radius: 2px; }
+        .sidebar { position: fixed !important; top: 0; left: 0; height: 100vh; }
+        .sidebar-overlay { display: none !important; }
+        @media (max-width: 640px) {
+          .sidebar-overlay { display: block !important; }
+          .lang-select { display: none !important; }
+          .resp-time { display: none !important; }
+          .hint-text { display: none !important; }
+        }
+        @media (min-width: 641px) {
+          .sidebar { position: relative !important; }
+          .sidebar-overlay { display: none !important; }
+        }
       `}</style>
     </div>
   );
