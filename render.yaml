@@ -3,7 +3,7 @@ services:
     name: indichat-server
     env: node
     rootDir: server
-    buildCommand: cd ../web && npm install && npm run build && cd ../server && npm install
+    buildCommand: cd ../web && npm install && npm run build && cd ../server && npm install --build-from-source
     startCommand: node index.js
     envVars:
       - key: PORT
