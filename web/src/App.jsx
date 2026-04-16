@@ -5,8 +5,7 @@ import Chat from './pages/Chat';
 import Devices from './pages/Devices';
 import DeviceConfig from './pages/DeviceConfig';
 import Admin from './pages/Admin';
-import ResetPassword from './pages/ResetPassword';
-import MagicLogin from './pages/MagicLogin';
+import AuthCallback from './pages/AuthCallback';
 import ChangeEmail from './pages/ChangeEmail';
 
 export default function App() {
@@ -25,10 +24,15 @@ export default function App() {
         <Route path="/devices"       element={user ? <Devices user={user} onLogout={logout} /> : <Navigate to="/" />} />
         <Route path="/device/:id"    element={user ? <DeviceConfig /> : <Navigate to="/" />} />
         <Route path="/admin"         element={user ? <Admin user={user} onLogout={logout} /> : <Navigate to="/" />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/magic-login"   element={<MagicLogin onLogin={login} />} />
         <Route path="/change-email"  element={<ChangeEmail user={user} />} />
-        <Route path="/auth-callback" element={<MagicLogin onLogin={login} />} />
+
+        {/* Single auth callback — handles magic link + password reset */}
+        <Route path="/auth/callback" element={<AuthCallback onLogin={login} />} />
+
+        {/* Legacy redirects — old links still work */}
+        <Route path="/reset-password" element={<AuthCallback onLogin={login} />} />
+        <Route path="/magic-login"    element={<AuthCallback onLogin={login} />} />
+        <Route path="/auth-callback"  element={<AuthCallback onLogin={login} />} />
       </Routes>
     </BrowserRouter>
   );

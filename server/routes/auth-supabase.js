@@ -41,7 +41,7 @@ router.post('/reset-password', async (req, res) => {
     // resetPasswordForEmail actually sends the email via configured SMTP
     const sb = sbAnon();
     const { error } = await sb.auth.resetPasswordForEmail(email.toLowerCase().trim(), {
-      redirectTo: `${SITE_URL}/reset-password`,
+      redirectTo: `${SITE_URL}/auth/callback`,
     });
     if (error) throw error;
     res.json({ success: true });
@@ -64,7 +64,7 @@ router.post('/magic-link', async (req, res) => {
     const sb = sbAnon();
     const { error } = await sb.auth.signInWithOtp({
       email: email.toLowerCase().trim(),
-      options: { emailRedirectTo: `${SITE_URL}/magic-login` },
+      options: { emailRedirectTo: `${SITE_URL}/auth/callback` },
     });
     if (error) throw error;
     res.json({ success: true });
@@ -163,7 +163,7 @@ router.post('/admin/send-link', authMiddleware, adminOnly, async (req, res) => {
     if (type === 'reset_password') {
       const sbA = sbAnon();
       const { error } = await sbA.auth.resetPasswordForEmail(email, {
-        redirectTo: `${SITE_URL}/reset-password`
+        redirectTo: `${SITE_URL}/auth/callback`
       });
       if (error) throw error;
       return res.json({ success: true, message: `Reset link sent to ${email}` });
@@ -173,18 +173,17 @@ router.post('/admin/send-link', authMiddleware, adminOnly, async (req, res) => {
       const sbA = sbAnon();
       const { error } = await sbA.auth.signInWithOtp({
         email,
-        options: { emailRedirectTo: `${SITE_URL}/magic-login` }
+        options: { emailRedirectTo: `${SITE_URL}/auth/callback` }
       });
       if (error) throw error;
       return res.json({ success: true, message: `Magic link sent to ${email}` });
     }
 
     if (type === 'change_email') {
-      // Send magic link so user can login and change email
       const sbA = sbAnon();
       const { error } = await sbA.auth.signInWithOtp({
         email,
-        options: { emailRedirectTo: `${SITE_URL}/change-email` }
+        options: { emailRedirectTo: `${SITE_URL}/auth/callback` }
       });
       if (error) throw error;
       return res.json({ success: true, message: `Change email link sent to ${email}` });
