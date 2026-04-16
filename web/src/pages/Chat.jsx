@@ -421,10 +421,7 @@ export default function Chat({ user }) {
     );
   }
 
-  // ── Chat Screen ───────────────────────────────────────────────────
-  if (!model) { setStep('select'); return null; }
-
-  // Mobile keyboard fix — use actual visible height
+  // Mobile keyboard fix — use actual visible height (must be before any early returns)
   useEffect(() => {
     const setVh = () => {
       document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
@@ -433,6 +430,9 @@ export default function Chat({ user }) {
     window.addEventListener('resize', setVh);
     return () => window.removeEventListener('resize', setVh);
   }, []);
+
+  // ── Chat Screen ───────────────────────────────────────────────────
+  if (!model) { setStep('select'); return null; }
 
   return (
     <div className="chat-root" style={{ display: 'flex', flexDirection: 'column', height: 'calc(var(--vh, 1vh) * 100)', background: t.bg, color: t.text, fontFamily: "'Inter',-apple-system,sans-serif", overflow: 'hidden', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
