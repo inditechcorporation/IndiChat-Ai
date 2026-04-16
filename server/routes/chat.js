@@ -134,9 +134,10 @@ router.post('/', authMiddleware, async (req, res) => {
   } else if (model.startsWith('gpt')) {
     url = 'https://api.openai.com/v1/chat/completions';
   } else if (model.startsWith('gemini')) {
-    // Gemini — use admin key rotation (server-side, never exposed to client)
+    // Gemini — load keys fresh from DB, use admin key rotation
+    await loadGeminiKeys(); // reload in case admin added keys after server start
     const geminiKey = getGeminiKey() || api_key;
-    if (!geminiKey) return res.status(400).json({ error: 'No Gemini API key available. Add keys in Admin Panel.' });
+    if (!geminiKey) return res.status(400).json({ error: 'No Gemini API key available. Add keys in Admin Panel > Gemini Keys tab.' });
 
     // Map free model ID to actual Gemini model ID
     const actualModel = model === 'gemini-2.5-flash-free' ? 'gemini-2.5-flash' : model;

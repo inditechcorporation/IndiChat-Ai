@@ -23,7 +23,12 @@ async function loadGeminiKeys() {
 }
 
 function getGeminiKey() {
-  if (geminiKeys.length === 0) return null;
+  // Lazy load — reload from DB every time if no keys in memory
+  if (geminiKeys.length === 0) {
+    // Synchronously try to reload (async not possible here, so we trigger async reload)
+    loadGeminiKeys().catch(() => {});
+    return null;
+  }
 
   const now = Date.now();
   for (let i = 0; i < geminiKeys.length; i++) {
