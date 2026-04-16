@@ -13,9 +13,11 @@ const LINK_TYPES = [
   { id: 'reauthentication',label: 'Reauthentication',  icon: '🔒' },
 ];
 
-function UserRow({ u, currentUserId, onToggleAdmin, onMsg }) {
+function UserRow({ u, currentUserId, onToggleAdmin, onMsg, onUpdateName }) {
   const [showLinks, setShowLinks] = useState(false);
-  const [sending, setSending]     = useState('');
+  const [sending,   setSending]   = useState('');
+  const [editName,  setEditName]  = useState(false);
+  const [nameVal,   setNameVal]   = useState(u.name || '');
 
   const sendLink = async (type) => {
     setSending(type);
@@ -33,6 +35,22 @@ function UserRow({ u, currentUserId, onToggleAdmin, onMsg }) {
     setSending('');
   };
 
+  const saveName = async () => {
+    if (!nameVal.trim()) return;
+    try {
+      const res = await fetch(`/api/admin/users/${u.id}/update-name`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+        body: JSON.stringify({ name: nameVal.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      onMsg(`Name updated to "${nameVal.trim()}"`);
+      onUpdateName(u.id, nameVal.trim());
+      setEditName(false);
+    } catch (e) { onMsg(e.message, false); }
+  };
+
   return (
     <div style={{ background: t.bg3, borderRadius: '10px', overflow: 'hidden', border: `1px solid ${t.border}` }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 16px' }}>
@@ -40,7 +58,24 @@ function UserRow({ u, currentUserId, onToggleAdmin, onMsg }) {
           {u.is_admin ? <Crown size={16} /> : <User size={16} />}
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: '600', fontSize: '14px' }}>{u.name || 'No name'}</div>
+          {editName ? (
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginBottom: '2px' }}>
+              <input
+                style={{ padding: '4px 8px', background: t.bg2, border: `1px solid ${t.border}`, borderRadius: '6px', color: t.text, fontSize: '13px', outline: 'none', width: '140px' }}
+                value={nameVal}
+                onChange={e => setNameVal(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && saveName()}
+                autoFocus
+              />
+              <button onClick={saveName} style={{ fontSize: '11px', padding: '4px 8px', background: 'linear-gradient(135deg,#4f8ef7,#7c6af7)', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Save</button>
+              <button onClick={() => setEditName(false)} style={{ fontSize: '11px', padding: '4px 8px', background: t.bg2, border: `1px solid ${t.border}`, color: t.text2, borderRadius: '5px', cursor: 'pointer' }}>✕</button>
+            </div>
+          ) : (
+            <div style={{ fontWeight: '600', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {u.name || <span style={{ color: t.text3, fontStyle: 'italic' }}>No name</span>}
+              <button onClick={() => { setNameVal(u.name || ''); setEditName(true); }} style={{ background: 'transparent', border: 'none', color: t.text3, cursor: 'pointer', fontSize: '11px', padding: '1px 4px' }} title="Edit name">✏️</button>
+            </div>
+          )}
           <div style={{ fontSize: '12px', color: t.text2 }}>{u.email} · {u.device_count} device(s)</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -126,6 +161,10 @@ export default function Admin({ user, onLogout }) {
       await api.post(`/admin/users/${userId}/toggle-admin`);
       loadUsers();
     } catch {}
+  };
+
+  const updateUserName = (userId, name) => {
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, name } : u));
   };
 
   const TABS = [
@@ -289,7 +328,7 @@ export default function Admin({ user, onLogout }) {
             <div style={{ fontWeight: '700', fontSize: '15px', marginBottom: '16px' }}>👥 All Users ({users.length})</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {users.map(u => (
-                <UserRow key={u.id} u={u} currentUserId={user?.id} onToggleAdmin={toggleAdmin} onMsg={showMsg} />
+                <UserRow key={u.id} u={u} currentUserId={user?.id} onToggleAdmin={toggleAdmin} onMsg={showMsg} onUpdateName={updateUserName} />
               ))}
             </div>
           </div>

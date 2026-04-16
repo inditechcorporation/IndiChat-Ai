@@ -106,4 +106,29 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// ── POST /api/auth/update-profile ─────────────────────────────────────
+// User updates their own name
+const authMiddleware = require('../middleware/auth');
+router.post('/update-profile', authMiddleware, async (req, res) => {
+  const { name } = req.body;
+  if (!name || !name.trim()) return res.status(400).json({ error: 'Name required' });
+  try {
+    await run('UPDATE users SET name = ? WHERE id = ?', [name.trim(), req.user.id]);
+    res.json({ success: true, name: name.trim() });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── GET /api/auth/me ──────────────────────────────────────────────────
+router.get('/me', authMiddleware, async (req, res) => {
+  try {
+    const user = await get('SELECT id, email, name, is_admin FROM users WHERE id = ?', [req.user.id]);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 module.exports = router;

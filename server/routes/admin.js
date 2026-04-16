@@ -109,6 +109,16 @@ router.post('/users/:id/toggle-admin', authMiddleware, adminOnly, async (req, re
   res.json({ success: true, is_admin: !user.is_admin });
 });
 
+// ── POST /api/admin/users/:id/update-name ─────────────────────────────
+router.post('/users/:id/update-name', authMiddleware, adminOnly, async (req, res) => {
+  const { name } = req.body;
+  if (!name || !name.trim()) return res.status(400).json({ error: 'Name required' });
+  const user = await get('SELECT * FROM users WHERE id = ?', [req.params.id]);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  await run('UPDATE users SET name = ? WHERE id = ?', [name.trim(), req.params.id]);
+  res.json({ success: true, name: name.trim() });
+});
+
 // ── GET /api/admin/keys ───────────────────────────────────────────────
 router.get('/keys', authMiddleware, adminOnly, (req, res) => {
   res.json({ keys: getStatus() });

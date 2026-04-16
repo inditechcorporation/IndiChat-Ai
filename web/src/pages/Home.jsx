@@ -82,10 +82,28 @@ export default function Home({ user, onLogin, onLogout }) {
   const [loading, setLoading]     = useState(false);
   const [isAdmin, setIsAdmin]     = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [editName, setEditName]   = useState(false);
+  const [newName, setNewName]     = useState('');
+  const [nameMsg, setNameMsg]     = useState('');
 
   useEffect(() => {
     if (user) api.get('/admin/me').then(({ data }) => setIsAdmin(data.is_admin)).catch(() => {});
   }, [user]);
+
+  const saveName = async () => {
+    if (!newName.trim()) return;
+    try {
+      await api.post('/auth/update-profile', { name: newName.trim() });
+      const updated = { ...user, name: newName.trim() };
+      localStorage.setItem('indi_user', JSON.stringify(updated));
+      onLogin(updated);
+      setEditName(false);
+      setNameMsg('Name updated!');
+      setTimeout(() => setNameMsg(''), 3000);
+    } catch (e) {
+      setNameMsg('Failed to update');
+    }
+  };
 
   const openModal  = (m = 'login') => { setMode(m); setErr(''); setShowModal(true); setMobileMenu(false); };
   const closeModal = () => { setShowModal(false); setErr(''); };
@@ -136,9 +154,25 @@ export default function Home({ user, onLogin, onLogout }) {
           <div className="desktop-nav" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             {user ? (
               <>
-                <span style={{ color: t.text2, fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <User size={14} /> {user.name || user.email}
-                </span>
+                {editName ? (
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <input
+                      style={{ padding: '6px 10px', background: 'rgba(255,255,255,0.06)', border: `1px solid ${t.border}`, borderRadius: '6px', color: t.text, fontSize: '13px', outline: 'none', width: '130px' }}
+                      placeholder="Your name"
+                      value={newName}
+                      onChange={e => setNewName(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && saveName()}
+                      autoFocus
+                    />
+                    <button style={{ ...navBtn, background: 'linear-gradient(135deg,#4f8ef7,#7c6af7)', color: '#fff', border: 'none' }} onClick={saveName}>Save</button>
+                    <button style={navBtn} onClick={() => setEditName(false)}>✕</button>
+                  </div>
+                ) : (
+                  <button style={{ ...navBtn, cursor: 'pointer' }} onClick={() => { setNewName(user.name || ''); setEditName(true); }} title="Click to edit name">
+                    <User size={14} /> {user.name || user.email.split('@')[0]}
+                  </button>
+                )}
+                {nameMsg && <span style={{ fontSize: '11px', color: '#22c55e' }}>{nameMsg}</span>}
                 {isAdmin && <button style={navBtn} onClick={() => navigate('/admin')}><Settings size={14} /> Admin</button>}
                 <button style={navBtn} onClick={() => navigate('/devices')}><PlusCircle size={14} /> Devices</button>
                 <button style={{ ...navBtn, background: 'linear-gradient(135deg,#4f8ef7,#7c6af7)', color: '#fff', border: 'none' }} onClick={() => navigate('/chat')}><MessageSquare size={14} /> Chat</button>
