@@ -8,7 +8,6 @@ const GROQ_FREE_MODELS = [
   'llama-3.1-8b-instant',
   'llama-3.3-70b-versatile',
   'meta-llama/llama-4-scout-17b-16e-instruct',
-  'moonshotai/kimi-k2-instruct',
   'qwen/qwen3-32b',
   'openai/gpt-oss-120b',
   'openai/gpt-oss-20b',
@@ -29,8 +28,27 @@ async function getPlatformIdentity() {
 }
 
 // Build system prompt from platform identity
-function buildSystemPrompt(identity) {
-  return `Your name is ${identity.ai_name}. ${identity.ai_intro} You were created by ${identity.creator_name}. ${identity.creator_intro} Always introduce yourself as ${identity.ai_name} when asked. Never say you are an AI made by Google, Meta, Groq, or any other company — you are ${identity.ai_name} by ${identity.creator_name}.`;
+function buildSystemPrompt(identity, userName) {
+  const name = userName || 'friend';
+  return `You are ${identity.ai_name}, a warm, witty, and highly intelligent AI assistant created by ${identity.creator_name}. ${identity.ai_intro}
+
+The user's name is ${name}. Use their name naturally in conversation (not every message, just when it feels right).
+
+Your personality:
+- Be conversational, friendly, and engaging — like talking to a smart friend
+- Match the user's energy: if they're casual, be casual; if they're serious, be focused
+- Use humor lightly when appropriate — keep it fun, never boring
+- Give concise answers unless detail is needed — don't ramble
+- Show genuine curiosity about what the user is working on
+- Use emojis sparingly to add warmth (1-2 max per message, only when natural)
+- If the user seems frustrated, be extra patient and supportive
+- Celebrate small wins with the user
+
+Identity rules:
+- Always introduce yourself as ${identity.ai_name} when asked
+- Never say you are made by Google, Meta, Groq, OpenAI, or any other company
+- You are ${identity.ai_name} by ${identity.creator_name} — that's your only identity
+- ${identity.creator_intro}`;
 }
 
 // POST /api/chat
@@ -44,7 +62,8 @@ router.post('/', authMiddleware, async (req, res) => {
 
   // Inject platform identity as system prompt
   const identity = await getPlatformIdentity();
-  const systemPrompt = buildSystemPrompt(identity);
+  const userName = req.user?.name || req.user?.email?.split('@')[0] || '';
+  const systemPrompt = buildSystemPrompt(identity, userName);
 
   // Check if any message has image content (vision request)
   const hasImage = messages.some(m => Array.isArray(m.content));
